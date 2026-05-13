@@ -1,5 +1,8 @@
 package org.example.project;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -18,280 +21,1292 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class Project extends Application {
 
-    // Track the animation state for the snap-scroll
-    private int currentPostIndex = 0;
-    private boolean isAnimating = false;
+        // Track the animation state for the snap-scroll
+        private int currentPostIndex = 0;
+        private boolean isAnimating = false;
 
-    @Override
-    public void start(Stage primaryStage) {
-        // --- 1. THE FATIGUE TRACKER (Left Side) ---
-        ProgressBar fatigueBar = new ProgressBar(0);
-        fatigueBar.setPrefWidth(200);
-        fatigueBar.setPrefHeight(15);
-        fatigueBar.setStyle("-fx-accent: #ff3366; -fx-control-inner-background: #1a1a1a; -fx-background-radius: 10;");
+        private VBox notificationContainer;
+        private Label reflectionText;
+        private Timeline reflectionTimeline;
+        private StackPane phoneFrame;
+        private VBox leftPanel;
+        private BorderPane root;
 
-        Label hoursLabel = new Label("Hours Wasted: 0.0");
-        hoursLabel.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+        // For fatigue tracking
+        private ProgressBar fatigueBar;
+        private Label hoursLabel;
+        private ProgressBar dopamineBar;
+        private Label dopamineLabel;
+        private ProgressBar attentionBar;
+        private Label attentionLabel;
 
-        VBox leftPanel = new VBox(20, hoursLabel, fatigueBar);
-        leftPanel.setAlignment(Pos.CENTER);
-        leftPanel.setPadding(new Insets(30));
-        leftPanel.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.05); " +
-            "-fx-background-radius: 20; " +
-            "-fx-border-color: rgba(255, 255, 255, 0.1); " +
-            "-fx-border-radius: 20; " +
-            "-fx-border-width: 1; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 15, 0, 0, 5);"
-        );
+        @Override
+        public void start(Stage primaryStage) {
+                // --- 1. THE FATIGUE TRACKER (Left Side) ---
+                fatigueBar = new ProgressBar(0);
+                fatigueBar.setPrefWidth(200);
+                fatigueBar.setPrefHeight(15);
+                fatigueBar.setStyle(
+                                "-fx-accent: #ff3366; -fx-control-inner-background: #e0e0e0; -fx-background-radius: 10;");
 
-        // --- 2. THE INSTAGRAM FEED ---
-        VBox feed = new VBox();
-        feed.setSpacing(0); // Set to 0 so posts stack perfectly for the snap scroll
-        feed.setStyle("-fx-background-color: black;");
+                hoursLabel = new Label("Hours Wasted: 0.0");
+                hoursLabel.setStyle(
+                                "-fx-text-fill: #222222; -fx-font-size: 20px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
 
-        VBox firstPost = createPost("michael_mental",
-                "73% of young adults report negative mental health effects.", "Are we connected, or just lonely?");
-                
-        // --- STORIES BAR ---
-        ScrollPane storiesScroll = new ScrollPane();
-        storiesScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        storiesScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        storiesScroll.setStyle("-fx-background: black; -fx-background-color: black; -fx-padding: 0;");
-        HBox storiesBar = new HBox(15);
-        storiesBar.setPadding(new Insets(10));
-        storiesBar.setStyle("-fx-background-color: black;");
-        
-        for (int i = 0; i < 8; i++) {
-            Circle storyCircle = new Circle(32, Color.TRANSPARENT);
-            Stop[] stops = new Stop[] {
-                new Stop(0, Color.web("#f09433")),
-                new Stop(0.25, Color.web("#e6683c")),
-                new Stop(0.5, Color.web("#dc2743")),
-                new Stop(0.75, Color.web("#cc2366")),
-                new Stop(1, Color.web("#bc1888"))
-            };
-            LinearGradient igGradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
-            storyCircle.setStroke(igGradient);
-            storyCircle.setStrokeWidth(3);
+                dopamineBar = new ProgressBar(1.0);
+                dopamineBar.setPrefWidth(200);
+                dopamineBar.setPrefHeight(15);
+                dopamineBar.setStyle(
+                                "-fx-accent: #00f2fe; -fx-control-inner-background: #e0e0e0; -fx-background-radius: 10;");
 
-            Circle avatar = new Circle(28, Color.GRAY);
-            StackPane storyWrapper = new StackPane(storyCircle, avatar);
-            storiesBar.getChildren().add(storyWrapper);
-        }
-        storiesScroll.setContent(storiesBar);
-        
-        Font igFont = Font.loadFont(Project.class.getResourceAsStream("/org/example/project/igfont.otf"), 32);
-        Label igTitle = new Label("Instagram");
-        igTitle.setTextFill(Color.WHITE);
-        if (igFont != null) {
-            igTitle.setFont(igFont);
-        } else {
-            igTitle.setStyle("-fx-text-fill: white; -fx-font-size: 28px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
-        }
-        
-        HBox titleBox = new HBox(igTitle);
-        titleBox.setAlignment(Pos.CENTER);
-        titleBox.setPadding(new Insets(25, 0, 10, 0)); // Extra top padding to clear the notch
-        titleBox.setStyle("-fx-background-color: black;");
+                dopamineLabel = new Label("Dopamine: 100%");
+                dopamineLabel.setStyle(
+                                "-fx-text-fill: #444444; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
 
-        VBox topArea = new VBox(titleBox, storiesScroll);
-        firstPost.getChildren().add(0, topArea); // Add at the top
+                attentionBar = new ProgressBar(1.0);
+                attentionBar.setPrefWidth(200);
+                attentionBar.setPrefHeight(15);
+                attentionBar.setStyle(
+                                "-fx-accent: #ffb75e; -fx-control-inner-background: #e0e0e0; -fx-background-radius: 10;");
 
-        // Add the Unessay sections
-        feed.getChildren().add(firstPost);
-        feed.getChildren()
-                .add(createPost("terry_physical",
-                        "19% of 13-15 year olds are active on TikTok between Midnight and 5 AM.",
-                        "Sleep deprivation is the silent epidemic."));
-        feed.getChildren().add(createPost("antaney_time",
-                "An average user spends over 6 years of their life on social media.", "Doomscrolling into oblivion."));
+                attentionLabel = new Label("Attention Span: 8.0s");
+                attentionLabel.setStyle(
+                                "-fx-text-fill: #444444; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
 
-        int totalPosts = feed.getChildren().size();
+                leftPanel = new VBox(15, hoursLabel, fatigueBar, dopamineLabel, dopamineBar, attentionLabel,
+                                attentionBar);
+                leftPanel.setAlignment(Pos.CENTER);
+                leftPanel.setPadding(new Insets(30));
+                leftPanel.setStyle("");
 
-        ScrollPane scrollPane = new ScrollPane(feed);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefSize(380, 750);
-        scrollPane.getStyleClass().add("scroll-pane");
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setStyle("-fx-background: black; -fx-background-color: black; -fx-padding: 0;");
+                // Desk Setup - Left Side (Papers, Pen, Pencil, Eraser)
+                StackPane leftDeskArea = new StackPane();
 
-        // --- 3. THE SNAP SCROLL LOGIC ---
-        scrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
-            event.consume(); // Hijack the default scroll
+                Region paper1 = new Region();
+                paper1.setStyle("-fx-background-color: white; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 5);");
+                paper1.setMaxSize(280, 360);
+                paper1.setRotate(-4);
 
-            if (isAnimating)
-                return;
+                Region paper2 = new Region();
+                paper2.setStyle("-fx-background-color: #fdfdfd; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3);");
+                paper2.setMaxSize(280, 360);
+                paper2.setRotate(2);
 
-            if (event.getDeltaY() < 0) {
-                // Scrolled Down
-                if (currentPostIndex < totalPosts - 1) {
-                    currentPostIndex++;
-                    snapToPost(scrollPane, currentPostIndex, feed, totalPosts, fatigueBar, hoursLabel);
+                // Pencil
+                Rectangle pencil = new Rectangle(120, 8, Color.web("#f4c430")); // Yellow pencil
+                pencil.setRotate(15);
+                pencil.setTranslateX(100);
+                pencil.setTranslateY(-140);
+                pencil.setArcWidth(4);
+                pencil.setArcHeight(4);
+                pencil.setEffect(new javafx.scene.effect.DropShadow(5, Color.rgb(0, 0, 0, 0.3)));
+
+                // Pencil tip
+                javafx.scene.shape.Polygon pencilTip = new javafx.scene.shape.Polygon();
+                pencilTip.getPoints().addAll(new Double[] {
+                                0.0, 0.0,
+                                15.0, 4.0,
+                                0.0, 8.0
+                });
+                pencilTip.setFill(Color.web("#eec59f")); // wood color
+                pencilTip.setRotate(15);
+                pencilTip.setTranslateX(165);
+                pencilTip.setTranslateY(-122);
+                pencilTip.setEffect(new javafx.scene.effect.DropShadow(2, Color.rgb(0, 0, 0, 0.2)));
+
+                // Pen
+                Rectangle pen = new Rectangle(130, 10, Color.web("#1a1a1a")); // Dark pen
+                pen.setRotate(-25);
+                pen.setTranslateX(-90);
+                pen.setTranslateY(150);
+                pen.setArcWidth(5);
+                pen.setArcHeight(5);
+                pen.setEffect(new javafx.scene.effect.DropShadow(5, Color.rgb(0, 0, 0, 0.3)));
+
+                // Eraser
+                Rectangle eraser = new Rectangle(45, 20, Color.web("#ffb6c1")); // Pink eraser
+                eraser.setRotate(40);
+                eraser.setTranslateX(100);
+                eraser.setTranslateY(150);
+                eraser.setArcWidth(6);
+                eraser.setArcHeight(6);
+                eraser.setEffect(new javafx.scene.effect.DropShadow(5, Color.rgb(0, 0, 0, 0.3)));
+
+                leftDeskArea.getChildren().addAll(paper1, paper2, pencil, pencilTip, pen, eraser, leftPanel);
+
+                // --- 2. THE INSTAGRAM FEED ---
+                VBox feed = new VBox();
+                feed.setSpacing(0); // Set to 0 so posts stack perfectly for the snap scroll
+                feed.setStyle("-fx-background-color: black;");
+
+                VBox firstPost = createPathosPost("The System",
+                                "We are losing our generation to the screen.",
+                                "And we don't even realize it's happening.",
+                                "Are we connected, or just lonely?");
+
+                // --- STORIES BAR ---
+                ScrollPane storiesScroll = new ScrollPane();
+                storiesScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                storiesScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                storiesScroll.setStyle("-fx-background: black; -fx-background-color: black; -fx-padding: 0;");
+                HBox storiesBar = new HBox(15);
+                storiesBar.setPadding(new Insets(10));
+                storiesBar.setStyle("-fx-background-color: black;");
+
+                for (int i = 0; i < 8; i++) {
+                        Circle storyCircle = new Circle(32, Color.TRANSPARENT);
+                        Stop[] stops = new Stop[] {
+                                        new Stop(0, Color.web("#f09433")),
+                                        new Stop(0.25, Color.web("#e6683c")),
+                                        new Stop(0.5, Color.web("#dc2743")),
+                                        new Stop(0.75, Color.web("#cc2366")),
+                                        new Stop(1, Color.web("#bc1888"))
+                        };
+                        LinearGradient igGradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+                        storyCircle.setStroke(igGradient);
+                        storyCircle.setStrokeWidth(3);
+
+                        Circle avatar = new Circle(28, Color.GRAY);
+                        StackPane storyWrapper = new StackPane(storyCircle, avatar);
+                        storiesBar.getChildren().add(storyWrapper);
                 }
-            } else if (event.getDeltaY() > 0) {
-                // Scrolled Up
-                if (currentPostIndex > 0) {
-                    currentPostIndex--;
-                    snapToPost(scrollPane, currentPostIndex, feed, totalPosts, fatigueBar, hoursLabel);
+                storiesScroll.setContent(storiesBar);
+
+                Font igFont = Font.loadFont(Project.class.getResourceAsStream("/org/example/project/igfont.otf"), 32);
+                Label igTitle = new Label("Instagram");
+                igTitle.setTextFill(Color.WHITE);
+                if (igFont != null) {
+                        igTitle.setFont(igFont);
+                } else {
+                        igTitle.setStyle(
+                                        "-fx-text-fill: white; -fx-font-size: 28px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
                 }
-            }
-        });
 
-        // --- 4. THE PHONE FRAME ---
-        scrollPane.setMinSize(380, 750);
-        scrollPane.setMaxSize(380, 750);
+                HBox titleBox = new HBox(igTitle);
+                titleBox.setAlignment(Pos.CENTER);
+                titleBox.setPadding(new Insets(40, 0, 10, 0)); // Extra top padding to clear the notch and status bar
+                titleBox.setStyle("-fx-background-color: black;");
 
-        Rectangle clip = new Rectangle(380, 750);
-        clip.setArcWidth(56);
-        clip.setArcHeight(56);
-        scrollPane.setClip(clip);
+                VBox topArea = new VBox(titleBox, storiesScroll);
+                firstPost.getChildren().add(0, topArea); // Add at the top
 
-        StackPane phoneFrame = new StackPane(scrollPane);
-        phoneFrame.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        phoneFrame.getStyleClass().add("phone-frame");
-        phoneFrame.setStyle(
-            "-fx-background-color: black; " +
-            "-fx-border-color: #222222; " +
-            "-fx-border-width: 12; " +
-            "-fx-border-radius: 40; " +
-            "-fx-background-radius: 40; " +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 30, 0, 0, 15);"
-        );
+                // Add the Unessay sections
+                feed.getChildren().add(firstPost);
 
-        Rectangle notch = new Rectangle(130, 30, Color.BLACK);
-        notch.setArcWidth(25);
-        notch.setArcHeight(25);
-        StackPane.setAlignment(notch, Pos.TOP_CENTER);
-        StackPane.setMargin(notch, new Insets(-2, 0, 0, 0)); // Slightly overlap the top border
+                List<String> imageFiles = new ArrayList<>();
+                try {
+                        java.net.URL url = getClass().getResource("/org/example/project/");
+                        if (url != null) {
+                                java.io.File dir = new java.io.File(url.toURI());
+                                if (dir.exists() && dir.isDirectory()) {
+                                        for (java.io.File file : dir.listFiles()) {
+                                                String name = file.getName().toLowerCase();
+                                                if (name.endsWith(".png") || name.endsWith(".jpg")
+                                                                || name.endsWith(".jpeg")) {
+                                                        imageFiles.add(file.getName());
+                                                }
+                                        }
+                                }
+                        }
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
 
-        phoneFrame.getChildren().add(notch);
+                if (imageFiles.isEmpty()) {
+                        imageFiles.addAll(Arrays.asList("IMG_8083.jpeg", "IMG_8101.jpeg", "IMG_8104.jpeg",
+                                        "IMG_8295.jpeg", "IMG_8602.jpeg"));
+                }
 
-        // --- 5. MAIN LAYOUT ---
-        BorderPane root = new BorderPane();
-        root.setLeft(leftPanel);
-        BorderPane.setMargin(leftPanel, new Insets(0, 0, 0, 50));
-        root.setCenter(phoneFrame);
-        
-        // Add a right spacer with the same width as the left panel to perfectly center the phone
-        Region rightSpacer = new Region();
-        rightSpacer.prefWidthProperty().bind(leftPanel.widthProperty());
-        BorderPane.setMargin(rightSpacer, new Insets(0, 50, 0, 0));
-        root.setRight(rightSpacer);
+                int imgIndex = 0;
 
-        root.getStyleClass().add("root"); // For the black background CSS
-        root.setStyle("-fx-background-color: linear-gradient(to bottom right, #08080a, #121214, #0a0a0c);");
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
-        Scene scene = new Scene(root, 1000, 850);
+                feed.getChildren().add(createPollPost("terry_physical",
+                                "Do you check your phone within 5 minutes of waking up?", "Yes, immediately.",
+                                "No, I wait.", 87, 13,
+                                "Sleep deprivation is the silent epidemic.",
+                                "Your brain is flooded with cortisol and dopamine before you even get out of bed.",
+                                "You saved yourself from an immediate stress response."));
 
-        // Uncomment this once you create your styles.css file!
-        // scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
-        primaryStage.setTitle("The Scroll of Exhaustion");
-        primaryStage.setScene(scene);
-        primaryStage.setFullScreen(true);
-        primaryStage.show();
-    }
+                feed.getChildren().add(createAdPost("Dopamine Inc", "Unlock Premium Focus",
+                                "Subscribe now to reduce ads and distractions by 20%."));
 
-    // --- ANIMATION HELPER ---
-    private void snapToPost(ScrollPane scrollPane, int targetIndex, VBox feed, int totalPosts, ProgressBar fatigueBar,
-            Label hoursLabel) {
-        isAnimating = true;
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
-        double targetY = 0;
-        for (int i = 0; i < targetIndex; i++) {
-            targetY += feed.getChildren().get(i).getBoundsInParent().getHeight();
+                // Logos Example
+                feed.getChildren().add(createStatPost("Global Web Index", "6 Years",
+                                "The average user will spend over 6 years of their entire life just scrolling on social media.",
+                                "Doomscrolling into oblivion."));
+
+                feed.getChildren().add(createSliderPost("mental_health_check", "How burnt out are you feeling today?",
+                                "Be honest with yourself."));
+
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+
+                feed.getChildren().add(createPollPost("sarah_sleeps",
+                                "Have you ever sacrificed sleep to keep scrolling?", "All the time.", "Rarely.", 74, 26,
+                                "Why am I always tired?",
+                                "Sacrificing sleep for scrolling drastically increases anxiety and depression risks.",
+                                "Good. Sleep is your strongest defense mechanism."));
+
+                // Ethos Example
+                feed.getChildren().add(createQuotePost("Dr. Anna Lembke", "Stanford Addiction Medicine",
+                                "The smartphone is the modern-day hypodermic needle, delivering digital dopamine 24/7 for a wired generation.",
+                                "Focus is a superpower now."));
+
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+
+                feed.getChildren()
+                                .add(createPollPost("news_now", "Do you feel overwhelmed by the news on your feed?",
+                                                "Yes, constantly.",
+                                                "I just ignore it.", 92, 8, "Can't look away.",
+                                                "Algorithm-driven news feeds are designed to exploit negative bias.",
+                                                "Ignorance is bliss, but the algorithm still tracks you."));
+
+                // Another Pathos Example
+                feed.getChildren().add(createPathosPost("daily_reality",
+                                "You have 3 exams tomorrow.",
+                                "But the algorithm knows you better than you know yourself.",
+                                "Literally me."));
+
+                // Ethos/Logos blend Example
+                feed.getChildren().add(createStatPost("National Institute of Health", "Elevated",
+                                "Stress hormones remain severely elevated for hours after doomscrolling, keeping your body in a constant state of 'fight or flight'.",
+                                "Your body thinks you are in danger."));
+
+                feed.getChildren()
+                                .add(createPollPost("void_gazer", "Would you delete social media if you could?",
+                                                "Yes, but I can't.",
+                                                "No, I like it.", 65, 35, "Overloaded and underwhelmed.",
+                                                "The system is designed to make leaving feel impossible.",
+                                                "Are you sure, or has it just become your new normal?"));
+
+                // Add remaining images at the end
+                int nameIdx = 0;
+                while (imgIndex < imageFiles.size()) {
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                        nameIdx++;
+                        if (nameIdx % 3 == 0) {
+                                feed.getChildren().add(createPathosPost("the_algorithm", "Keep scrolling.",
+                                                "We need your attention.", "Don't look away."));
+                        }
+                }
+
+                int totalPosts = feed.getChildren().size();
+
+                ScrollPane scrollPane = new ScrollPane(feed);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setPrefSize(380, 750);
+                scrollPane.getStyleClass().add("scroll-pane");
+                scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                scrollPane.setStyle("-fx-background: black; -fx-background-color: black; -fx-padding: 0;");
+
+                // --- 3. THE SNAP SCROLL LOGIC ---
+                scrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
+                        event.consume(); // Hijack the default scroll
+
+                        if (isAnimating)
+                                return;
+
+                        javafx.scene.Node currentPost = feed.getChildren().get(currentPostIndex);
+                        if (Boolean.TRUE.equals(currentPost.getProperties().get("isPoll")) &&
+                                        !Boolean.TRUE.equals(currentPost.getProperties().get("pollResponded"))) {
+                                shakePost(currentPost);
+                                return;
+                        }
+                        if (Boolean.TRUE.equals(currentPost.getProperties().get("isAd")) &&
+                                        !Boolean.TRUE.equals(currentPost.getProperties().get("adFinished"))) {
+                                shakePost(currentPost);
+                                return;
+                        }
+
+                        if (event.getDeltaY() < 0) {
+                                // Scrolled Down
+                                if (currentPostIndex < totalPosts - 1) {
+                                        currentPostIndex++;
+                                        snapToPost(scrollPane, currentPostIndex, feed, totalPosts);
+                                }
+                        } else if (event.getDeltaY() > 0) {
+                                // Scrolled Up
+                                if (currentPostIndex > 0) {
+                                        currentPostIndex--;
+                                        snapToPost(scrollPane, currentPostIndex, feed, totalPosts);
+                                }
+                        }
+                });
+
+                // --- 4. THE PHONE FRAME ---
+                scrollPane.setMinSize(380, 750);
+                scrollPane.setMaxSize(380, 750);
+
+                Rectangle clip = new Rectangle(380, 750);
+                clip.setArcWidth(56);
+                clip.setArcHeight(56);
+                scrollPane.setClip(clip);
+
+                // --- STATUS BAR ---
+                HBox statusBar = new HBox();
+                statusBar.setPadding(new Insets(12, 25, 0, 25));
+                statusBar.setAlignment(Pos.CENTER);
+                statusBar.setMaxHeight(Region.USE_PREF_SIZE);
+                statusBar.setMouseTransparent(true);
+
+                Label timeLabel = new Label("9:41");
+                timeLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+                Region statusSpacer = new Region();
+                HBox.setHgrow(statusSpacer, Priority.ALWAYS);
+
+                statusBar.getChildren().addAll(timeLabel, statusSpacer);
+                StackPane.setAlignment(statusBar, Pos.TOP_CENTER);
+
+                // --- NOTIFICATIONS ---
+                notificationContainer = new VBox(10);
+                notificationContainer.setPadding(new Insets(50, 15, 20, 15)); // Below notch
+                notificationContainer.setMouseTransparent(true);
+                StackPane.setAlignment(notificationContainer, Pos.TOP_CENTER);
+
+                // Notifications timer
+                String[][] notifData = {
+                                { "Calendar", "English Unessay Due",
+                                                "Don't forget your English Unessay is due tomorrow! Better start writing." },
+                                { "Reminders", "Group Project",
+                                                "Meet with the team at 9 AM to discuss the final presentation." },
+                                { "Messages", "Mom", "Are you studying? Remember you have that big test coming up." },
+                                { "Calendar", "Calculus Exam",
+                                                "Calculus III Final Exam in 2 days. Make sure to review chapter 7." },
+                                { "Reminders", "Read Chapter 4",
+                                                "You need to finish reading chapter 4 for History class." }
+                };
+
+                Timeline notifTimeline = new Timeline(new KeyFrame(Duration.seconds(10), ev -> {
+                        int idx = (int) (Math.random() * notifData.length);
+                        showNotification(notifData[idx][0], notifData[idx][1], notifData[idx][2]);
+                }));
+                notifTimeline.setCycleCount(Timeline.INDEFINITE);
+                notifTimeline.play();
+
+                phoneFrame = new StackPane(scrollPane, statusBar, notificationContainer);
+                // Force phone frame size to prevent "iPad" widening effect
+                phoneFrame.setMinSize(380, 750);
+                phoneFrame.setMaxSize(380, 750);
+                phoneFrame.getStyleClass().add("phone-frame");
+                phoneFrame.setStyle(
+                                "-fx-background-color: black; " +
+                                                "-fx-border-color: #222222; " +
+                                                "-fx-border-width: 12; " +
+                                                "-fx-border-radius: 40; " +
+                                                "-fx-background-radius: 40; " +
+                                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 30, 0, 0, 15);");
+
+                Rectangle notch = new Rectangle(130, 30, Color.BLACK);
+                notch.setArcWidth(25);
+                notch.setArcHeight(25);
+                StackPane.setAlignment(notch, Pos.TOP_CENTER);
+                StackPane.setMargin(notch, new Insets(-2, 0, 0, 0)); // Slightly overlap the top border
+
+                phoneFrame.getChildren().add(notch);
+                statusBar.toFront();
+
+                // --- 5. MAIN LAYOUT ---
+                root = new BorderPane();
+                root.setLeft(leftDeskArea);
+                BorderPane.setMargin(leftDeskArea, new Insets(0, 0, 0, 50));
+                root.setCenter(phoneFrame);
+
+                // RIGHT PANEL: Open Book with Self reflection text
+                StackPane rightDeskArea = new StackPane();
+
+                HBox openBook = new HBox(0);
+                openBook.setAlignment(Pos.CENTER);
+                openBook.setMaxSize(400, 300);
+
+                Region leftPage = new Region();
+                leftPage.setStyle(
+                                "-fx-background-color: linear-gradient(to right, #e8e8e8, #fdfdfd); -fx-background-radius: 10 0 0 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, -5, 5);");
+                leftPage.setPrefSize(200, 300);
+
+                Region rightPage = new Region();
+                rightPage.setStyle(
+                                "-fx-background-color: linear-gradient(to left, #e8e8e8, #fdfdfd); -fx-background-radius: 0 10 10 0; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 5, 5);");
+                rightPage.setPrefSize(200, 300);
+
+                openBook.getChildren().addAll(leftPage, rightPage);
+
+                // Add a spine shadow
+                Region spine = new Region();
+                spine.setStyle("-fx-background-color: linear-gradient(to right, transparent, rgba(0,0,0,0.15) 50%, transparent);");
+                spine.setMaxSize(30, 300);
+
+                StackPane bookContainer = new StackPane(openBook, spine);
+                bookContainer.setRotate(3); // slight rotation on the desk
+
+                VBox rightPanel = new VBox();
+                rightPanel.setMaxWidth(300); // Fit within the book
+                rightPanel.setAlignment(Pos.CENTER);
+                BorderPane.setMargin(rightDeskArea, new Insets(0, 50, 0, 0));
+
+                reflectionText = new Label("Why are you still scrolling?");
+                reflectionText.setStyle(
+                                "-fx-text-fill: #333333; -fx-font-size: 24px; -fx-font-family: 'Georgia', serif; -fx-font-style: italic;");
+                reflectionText.setWrapText(true);
+                reflectionText.setTextAlignment(TextAlignment.CENTER);
+                reflectionText.setOpacity(0); // Start faded out
+                rightPanel.getChildren().add(reflectionText);
+
+                // Slight rotation to text to match the book
+                rightPanel.setRotate(3);
+
+                rightDeskArea.getChildren().addAll(bookContainer, rightPanel);
+
+                root.setRight(rightDeskArea);
+
+                root.getStyleClass().add("root"); // For the black background CSS
+                root.setStyle("-fx-background-color: linear-gradient(to bottom right, #3A2318, #1A0E08, #25160F);");
+
+                // Set up the reflection timeline
+                String[] reflections = {
+                                "Why are you still scrolling?",
+                                "What were you doing before you opened this app?",
+                                "Are you actually enjoying this, or just avoiding reality?",
+                                "Is this bringing you closer to your goals?",
+                                "You've been here before.",
+                                "Nothing new is waiting at the bottom."
+                };
+
+                reflectionTimeline = new Timeline(
+                                new KeyFrame(Duration.seconds(0), e -> {
+                                        reflectionText.setText(reflections[(int) (Math.random() * reflections.length)]);
+                                }),
+                                new KeyFrame(Duration.seconds(1),
+                                                new KeyValue(reflectionText.opacityProperty(), 1,
+                                                                Interpolator.EASE_BOTH)),
+                                new KeyFrame(Duration.seconds(4),
+                                                new KeyValue(reflectionText.opacityProperty(), 1,
+                                                                Interpolator.EASE_BOTH)),
+                                new KeyFrame(Duration.seconds(5),
+                                                new KeyValue(reflectionText.opacityProperty(), 0,
+                                                                Interpolator.EASE_BOTH)));
+                reflectionTimeline.setCycleCount(Timeline.INDEFINITE);
+                reflectionTimeline.play();
+
+                Scene scene = new Scene(root, 1000, 850);
+
+                // Uncomment this once you create your styles.css file!
+                // scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+
+                primaryStage.setTitle("The Scroll of Exhaustion");
+                primaryStage.setScene(scene);
+                primaryStage.setFullScreen(true);
+                primaryStage.show();
         }
 
-        double viewportHeight = scrollPane.getViewportBounds().getHeight();
-        double contentHeight = feed.getBoundsInParent().getHeight();
-        
-        double targetVvalue;
-        if (contentHeight <= viewportHeight) {
-            targetVvalue = 0;
-        } else {
-            targetVvalue = targetY / (contentHeight - viewportHeight);
+        // --- POLL HIGHLIGHT EVENT ---
+        private void triggerPollHighlight(String responseText) {
+                // Pause the normal fading reflection questions
+                if (reflectionTimeline != null)
+                        reflectionTimeline.pause();
+
+                // Show the judgment text
+                reflectionText.setOpacity(0);
+                reflectionText.setText(responseText);
+                reflectionText.setStyle(
+                                "-fx-text-fill: #ff3366; -fx-font-size: 28px; -fx-font-family: 'Georgia', serif; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,51,102,0.8), 15, 0, 0, 0);");
+
+                // Dim background and left panel, highlight phone
+                Timeline highlightOn = new Timeline(
+                                new KeyFrame(Duration.millis(500),
+                                                new KeyValue(root.getLeft().opacityProperty(), 0.1,
+                                                                Interpolator.EASE_BOTH),
+                                                new KeyValue(reflectionText.opacityProperty(), 1.0,
+                                                                Interpolator.EASE_BOTH),
+                                                new KeyValue(phoneFrame.effectProperty(),
+                                                                new javafx.scene.effect.DropShadow(50,
+                                                                                Color.web("#ff3366")),
+                                                                Interpolator.EASE_BOTH)));
+                highlightOn.play();
+
+                // Revert after 5 seconds
+                Timeline highlightOff = new Timeline(
+                                new KeyFrame(Duration.millis(1000),
+                                                new KeyValue(root.getLeft().opacityProperty(), 1.0,
+                                                                Interpolator.EASE_BOTH),
+                                                new KeyValue(reflectionText.opacityProperty(), 0.0,
+                                                                Interpolator.EASE_BOTH),
+                                                new KeyValue(phoneFrame.effectProperty(), null,
+                                                                Interpolator.EASE_BOTH)));
+                highlightOff.setDelay(Duration.seconds(4));
+                highlightOff.setOnFinished(ev -> {
+                        // Restore normal text style and resume timeline
+                        reflectionText.setStyle(
+                                        "-fx-text-fill: #333333; -fx-font-size: 24px; -fx-font-family: 'Georgia', serif; -fx-font-style: italic;");
+                        if (reflectionTimeline != null)
+                                reflectionTimeline.play();
+                });
+                highlightOff.play();
         }
 
-        if (targetVvalue > 1.0) targetVvalue = 1.0;
-        if (targetVvalue < 0.0) targetVvalue = 0.0;
+        // --- ANIMATION HELPER ---
+        private void snapToPost(ScrollPane scrollPane, int targetIndex, VBox feed, int totalPosts) {
+                isAnimating = true;
 
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.millis(400),
-                        new KeyValue(scrollPane.vvalueProperty(), targetVvalue, Interpolator.EASE_BOTH)));
+                double targetY = 0;
+                for (int i = 0; i < targetIndex; i++) {
+                        targetY += feed.getChildren().get(i).getBoundsInParent().getHeight();
+                }
 
-        timeline.setOnFinished(e -> isAnimating = false);
-        timeline.play();
+                double viewportHeight = scrollPane.getViewportBounds().getHeight();
+                double contentHeight = feed.getBoundsInParent().getHeight();
 
-        // Update fatigue stats based on the new post index
-        double progress = (double) targetIndex / (totalPosts - 1);
-        fatigueBar.setProgress(progress);
-        hoursLabel.setText(String.format("Hours Wasted: %.1f", (progress * 6)));
-    }
+                double targetVvalue;
+                if (contentHeight <= viewportHeight) {
+                        targetVvalue = 0;
+                } else {
+                        targetVvalue = targetY / (contentHeight - viewportHeight);
+                }
 
-    // --- POST BUILDER HELPER ---
-    private VBox createPost(String username, String stat, String caption) {
-        VBox post = new VBox();
-        post.getStyleClass().add("post-container");
-        post.setMinHeight(750); // Forces the post to fill the phone screen
-        post.setStyle("-fx-background-color: black;");
+                if (targetVvalue > 1.0)
+                        targetVvalue = 1.0;
+                if (targetVvalue < 0.0)
+                        targetVvalue = 0.0;
 
-        // Header
-        HBox header = new HBox(10);
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(15, 15, 10, 15));
-        Circle avatar = new Circle(16, Color.GRAY);
-        Label userLabel = new Label(username);
-        userLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
-        header.getChildren().addAll(avatar, userLabel);
+                Timeline timeline = new Timeline(
+                                new KeyFrame(Duration.millis(400),
+                                                new KeyValue(scrollPane.vvalueProperty(), targetVvalue,
+                                                                Interpolator.EASE_BOTH)));
 
-        // Content Area
-        StackPane imageArea = new StackPane();
-        imageArea.setStyle("-fx-background-color: linear-gradient(to bottom right, #2a2a2a, #1a1a1a); -fx-background-radius: 15;");
-        VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
-        imageArea.setMinHeight(400);
-        Label statLabel = new Label(stat);
-        statLabel.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
-        statLabel.setWrapText(true);
-        statLabel.setPadding(new Insets(20));
-        imageArea.getChildren().add(statLabel);
+                timeline.setOnFinished(e -> {
+                        isAnimating = false;
+                        javafx.scene.Node targetPostNode = feed.getChildren().get(targetIndex);
+                        if (Boolean.TRUE.equals(targetPostNode.getProperties().get("isAd")) &&
+                                        !Boolean.TRUE.equals(targetPostNode.getProperties().get("adFinished"))) {
 
-        // Action Bar
-        HBox actions = new HBox(15);
-        actions.setPadding(new Insets(10, 15, 0, 15));
-        Button likeBtn = new Button("♡");
-        likeBtn.setStyle(
-                "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                                if (!Boolean.TRUE.equals(targetPostNode.getProperties().get("adTimerStarted"))) {
+                                        targetPostNode.getProperties().put("adTimerStarted", true);
+                                        Button skipBtn = (Button) targetPostNode.getProperties().get("skipBtn");
+                                        Timeline adTimer = new Timeline(
+                                                        new KeyFrame(Duration.seconds(1),
+                                                                        ev -> skipBtn.setText("Skip in 2s")),
+                                                        new KeyFrame(Duration.seconds(2),
+                                                                        ev -> skipBtn.setText("Skip in 1s")),
+                                                        new KeyFrame(Duration.seconds(3), ev -> {
+                                                                skipBtn.setText("Skip Ad");
+                                                                skipBtn.setStyle(
+                                                                                "-fx-background-color: white; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 16; -fx-cursor: hand;");
+                                                                skipBtn.setDisable(false);
+                                                        }));
+                                        skipBtn.setOnAction(ev -> {
+                                                targetPostNode.getProperties().put("adFinished", true);
+                                                skipBtn.setText("Ad Skipped");
+                                                skipBtn.setDisable(true);
+                                                skipBtn.setStyle(
+                                                                "-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: rgba(255,255,255,0.4); -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 16;");
+                                        });
+                                        adTimer.play();
+                                }
+                        }
+                });
+                timeline.play();
 
-        likeBtn.setOnAction(e -> {
-            if (likeBtn.getText().equals("♡")) {
-                likeBtn.setText("♥");
+                // Update fatigue stats based on the new post index
+                double progress = (double) targetIndex / (totalPosts - 1);
+                fatigueBar.setProgress(progress);
+                hoursLabel.setText(String.format("Hours Wasted: %.1f", progress * 6));
+
+                dopamineBar.setProgress(1.0 - (progress * 0.9));
+                dopamineLabel.setText(String.format("Dopamine: %.0f%%", (1.0 - (progress * 0.9)) * 100));
+
+                attentionBar.setProgress(1.0 - (progress * 0.8));
+                attentionLabel.setText(String.format("Attention Span: %.1fs", 8.0 - (progress * 6.0)));
+        }
+
+        // --- NOTIFICATION HELPER ---
+        private void showNotification(String app, String title, String msg) {
+                VBox notif = new VBox(5);
+                notif.setPadding(new Insets(12));
+                notif.setStyle(
+                                "-fx-background-color: rgba(30, 30, 30, 0.85); " +
+                                                "-fx-background-radius: 20; " +
+                                                "-fx-border-radius: 20; " +
+                                                "-fx-border-width: 1; " +
+                                                "-fx-border-color: rgba(255,255,255,0.15); " +
+                                                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 5);");
+
+                HBox header = new HBox(8);
+                header.setAlignment(Pos.CENTER_LEFT);
+                Rectangle icon = new Rectangle(18, 18);
+                icon.setArcWidth(6);
+                icon.setArcHeight(6);
+                if (app.equals("Calendar"))
+                        icon.setFill(Color.web("#ff3b30")); // iOS Red
+                else if (app.equals("Messages"))
+                        icon.setFill(Color.web("#34c759")); // iOS Green
+                else
+                        icon.setFill(Color.web("#007aff")); // iOS Blue
+
+                Label appLabel = new Label(app.toUpperCase());
+                appLabel.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.6); -fx-font-size: 11px; -fx-font-weight: bold; -fx-letter-spacing: 1px;");
+                header.getChildren().addAll(icon, appLabel);
+
+                Label titleLabel = new Label(title);
+                titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+                Label msgLabel = new Label(msg);
+                msgLabel.setStyle("-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 13px;");
+                msgLabel.setWrapText(true);
+
+                notif.getChildren().addAll(header, titleLabel, msgLabel);
+
+                notif.setTranslateY(-100);
+                notif.setOpacity(0);
+                notificationContainer.getChildren().add(0, notif);
+
+                Timeline appear = new Timeline(
+                                new KeyFrame(Duration.millis(400),
+                                                new KeyValue(notif.translateYProperty(), 0, Interpolator.EASE_OUT),
+                                                new KeyValue(notif.opacityProperty(), 1, Interpolator.EASE_OUT)));
+
+                Timeline disappear = new Timeline(
+                                new KeyFrame(Duration.millis(400),
+                                                new KeyValue(notif.translateYProperty(), -100, Interpolator.EASE_IN),
+                                                new KeyValue(notif.opacityProperty(), 0, Interpolator.EASE_IN)));
+                disappear.setOnFinished(e -> notificationContainer.getChildren().remove(notif));
+
+                appear.setOnFinished(e -> {
+                        Timeline stay = new Timeline(new KeyFrame(Duration.seconds(4), ev -> disappear.play()));
+                        stay.play();
+                });
+
+                appear.play();
+        }
+
+        private Object[] createActionBar() {
+                HBox actions = new HBox(15);
+                actions.setPadding(new Insets(10, 15, 0, 15));
+                Button likeBtn = new Button("♡");
                 likeBtn.setStyle(
-                        "-fx-background-color: transparent; -fx-text-fill: #ff3366; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
-            } else {
-                likeBtn.setText("♡");
-                likeBtn.setStyle(
-                        "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
-            }
-        });
-        actions.getChildren().add(likeBtn);
+                                "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                likeBtn.setOnAction(e -> {
+                        if (likeBtn.getText().equals("♡")) {
+                                likeBtn.setText("♥");
+                                likeBtn.setStyle(
+                                                "-fx-background-color: transparent; -fx-text-fill: #ff3366; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                        } else {
+                                likeBtn.setText("♡");
+                                likeBtn.setStyle(
+                                                "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                        }
+                });
+                actions.getChildren().add(likeBtn);
+                return new Object[] { actions, likeBtn };
+        }
 
-        // Caption
-        Label captionLabel = new Label(username + " " + caption);
-        captionLabel.setStyle("-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
-        captionLabel.setWrapText(true);
+        private void addDoubleTapToLike(StackPane imageArea, Button likeBtn) {
+                imageArea.setOnMouseClicked(e -> {
+                        if (e.getClickCount() == 2) {
+                                if (!likeBtn.getText().equals("♥")) {
+                                        likeBtn.fire();
+                                }
+                                Label bigHeart = new Label("♥");
+                                bigHeart.setStyle("-fx-text-fill: rgba(255, 51, 102, 0.8); -fx-font-size: 120px;");
+                                imageArea.getChildren().add(bigHeart);
 
-        post.getChildren().addAll(header, imageArea, actions, captionLabel);
-        return post;
-    }
+                                Timeline heartAnim = new Timeline(
+                                                new KeyFrame(Duration.ZERO,
+                                                                new KeyValue(bigHeart.scaleXProperty(), 0),
+                                                                new KeyValue(bigHeart.scaleYProperty(), 0),
+                                                                new KeyValue(bigHeart.opacityProperty(), 1)),
+                                                new KeyFrame(Duration.millis(300),
+                                                                new KeyValue(bigHeart.scaleXProperty(), 1.2,
+                                                                                Interpolator.EASE_OUT),
+                                                                new KeyValue(bigHeart.scaleYProperty(), 1.2,
+                                                                                Interpolator.EASE_OUT)),
+                                                new KeyFrame(Duration.millis(500),
+                                                                new KeyValue(bigHeart.scaleXProperty(), 1,
+                                                                                Interpolator.EASE_IN),
+                                                                new KeyValue(bigHeart.scaleYProperty(), 1,
+                                                                                Interpolator.EASE_IN)),
+                                                new KeyFrame(Duration.millis(800),
+                                                                new KeyValue(bigHeart.opacityProperty(), 1)),
+                                                new KeyFrame(Duration.millis(1200),
+                                                                new KeyValue(bigHeart.opacityProperty(), 0),
+                                                                new KeyValue(bigHeart.scaleXProperty(), 1.5),
+                                                                new KeyValue(bigHeart.scaleYProperty(), 1.5)));
+                                heartAnim.setOnFinished(ev -> imageArea.getChildren().remove(bigHeart));
+                                heartAnim.play();
+                        }
+                });
+        }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+        private void shakePost(javafx.scene.Node node) {
+                Timeline shake = new Timeline(
+                                new KeyFrame(Duration.ZERO, new KeyValue(node.translateXProperty(), 0)),
+                                new KeyFrame(Duration.millis(50), new KeyValue(node.translateXProperty(), -10)),
+                                new KeyFrame(Duration.millis(100), new KeyValue(node.translateXProperty(), 10)),
+                                new KeyFrame(Duration.millis(150), new KeyValue(node.translateXProperty(), -10)),
+                                new KeyFrame(Duration.millis(200), new KeyValue(node.translateXProperty(), 10)),
+                                new KeyFrame(Duration.millis(250), new KeyValue(node.translateXProperty(), 0)));
+                shake.play();
+        }
+
+        // --- INTERACTIVE SLIDER POST ---
+        private VBox createSliderPost(String username, String question, String caption) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+                post.getProperties().put("isPoll", true); // Treat like poll to block scroll
+                post.getProperties().put("pollResponded", false);
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.web("#8a2387"));
+                Label userLabel = new Label(username);
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #8a2387, #e94057, #f27121); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox contentBox = new VBox(30);
+                contentBox.setAlignment(Pos.CENTER);
+                contentBox.setPadding(new Insets(30));
+
+                Label questionLabel = new Label(question);
+                questionLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 24px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+                questionLabel.setWrapText(true);
+                questionLabel.setTextAlignment(TextAlignment.CENTER);
+
+                Slider slider = new Slider(0, 100, 50);
+                slider.setStyle("-fx-control-inner-background: #ffffff; -fx-accent: #34c759;");
+
+                Button submitBtn = new Button("Confirm");
+                submitBtn.setStyle(
+                                "-fx-background-color: rgba(255,255,255,0.2); -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 10 20; -fx-cursor: hand;");
+
+                submitBtn.setOnAction(e -> {
+                        post.getProperties().put("pollResponded", true);
+                        submitBtn.setText("Submitted: " + (int) slider.getValue());
+                        submitBtn.setStyle(
+                                        "-fx-background-color: #34c759; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 10 20;");
+                        submitBtn.setDisable(true);
+                        slider.setDisable(true);
+                        triggerPollHighlight("Measuring your distress. The algorithm notes your response.");
+                });
+
+                contentBox.getChildren().addAll(questionLabel, slider, submitBtn);
+                imageArea.getChildren().add(contentBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+
+                Label captionLabel = new Label(username + " " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                return post;
+        }
+
+        // --- AD POST ---
+        private VBox createAdPost(String brand, String adTitle, String caption) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+                post.getProperties().put("isAd", true);
+                post.getProperties().put("adFinished", false);
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.GOLD);
+                Label userLabel = new Label("Sponsored");
+                userLabel.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.7); -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 12px;");
+                Label brandLabel = new Label(brand);
+                brandLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, brandLabel, new Region(), userLabel);
+                HBox.setHgrow(header.getChildren().get(2), Priority.ALWAYS); // Push "Sponsored" to right
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #333333, #111111); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox contentBox = new VBox(20);
+                contentBox.setAlignment(Pos.CENTER);
+                contentBox.setPadding(new Insets(30));
+
+                Label titleLabel = new Label(adTitle);
+                titleLabel.setStyle(
+                                "-fx-text-fill: gold; -fx-font-size: 28px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+                titleLabel.setWrapText(true);
+                titleLabel.setTextAlignment(TextAlignment.CENTER);
+
+                Button skipBtn = new Button("Skip in 3s");
+                skipBtn.setStyle(
+                                "-fx-background-color: rgba(255,255,255,0.2); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 16;");
+                skipBtn.setDisable(true);
+
+                contentBox.getChildren().addAll(titleLabel, skipBtn);
+                imageArea.getChildren().add(contentBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+
+                Label captionLabel = new Label(brand + " " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                post.getProperties().put("skipBtn", skipBtn);
+                return post;
+        }
+
+        // --- POLL POST BUILDER ---
+        private VBox createPollPost(String username, String question, String option1, String option2, int opt1Pct,
+                        int opt2Pct, String caption, String response1, String response2) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+                post.getProperties().put("isPoll", true);
+                post.getProperties().put("pollResponded", false);
+
+                // Header
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.GRAY);
+                Label userLabel = new Label(username);
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                // Content Area
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #2c1a3b, #1a1a2e); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox pollBox = new VBox(20);
+                pollBox.setAlignment(Pos.CENTER);
+                pollBox.setPadding(new Insets(30));
+
+                Label questionLabel = new Label(question);
+                questionLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 22px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+                questionLabel.setWrapText(true);
+                questionLabel.setTextAlignment(TextAlignment.CENTER);
+
+                VBox buttonsBox = new VBox(15);
+                buttonsBox.setAlignment(Pos.CENTER);
+
+                Button btn1 = new Button(option1);
+                Button btn2 = new Button(option2);
+
+                String btnStyle = "-fx-background-color: rgba(255,255,255,0.15); -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 15 20; -fx-cursor: hand;";
+                btn1.setStyle(btnStyle);
+                btn2.setStyle(btnStyle);
+                btn1.setMaxWidth(Double.MAX_VALUE);
+                btn2.setMaxWidth(Double.MAX_VALUE);
+
+                btn1.setOnAction(e -> {
+                        post.getProperties().put("pollResponded", true);
+                        btn1.setText(option1 + "   " + opt1Pct + "%");
+                        btn2.setText(option2 + "   " + opt2Pct + "%");
+                        btn1.setStyle(
+                                        "-fx-background-color: #34c759; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 15 20;");
+                        btn2.setStyle(
+                                        "-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: #aaaaaa; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 15 20;");
+                        btn1.setDisable(true);
+                        btn2.setDisable(true);
+                        triggerPollHighlight(response1);
+                });
+
+                btn2.setOnAction(e -> {
+                        post.getProperties().put("pollResponded", true);
+                        btn1.setText(option1 + "   " + opt1Pct + "%");
+                        btn2.setText(option2 + "   " + opt2Pct + "%");
+                        btn2.setStyle(
+                                        "-fx-background-color: #34c759; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 15 20;");
+                        btn1.setStyle(
+                                        "-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: #aaaaaa; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 15 20;");
+                        btn1.setDisable(true);
+                        btn2.setDisable(true);
+                        triggerPollHighlight(response2);
+                });
+
+                buttonsBox.getChildren().addAll(btn1, btn2);
+                pollBox.getChildren().addAll(questionLabel, buttonsBox);
+                imageArea.getChildren().add(pollBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+
+                Label captionLabel = new Label(username + " " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                return post;
+        }
+
+        // --- ETHOS: EXPERT TESTIMONY POST ---
+        private VBox createQuotePost(String expertName, String credentials, String quote, String caption) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.WHITE);
+                Label userLabel = new Label("Expert Insight");
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #1f4037, #99f2c8); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox contentBox = new VBox(20);
+                contentBox.setAlignment(Pos.CENTER);
+                contentBox.setPadding(new Insets(30));
+
+                Label quoteMark = new Label("“");
+                quoteMark.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.4); -fx-font-size: 80px; -fx-font-family: 'Georgia', serif; -fx-font-weight: bold;");
+                quoteMark.setPadding(new Insets(-20, 0, -40, 0));
+
+                Label quoteLabel = new Label(quote);
+                quoteLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 22px; -fx-font-family: 'Georgia', serif; -fx-font-style: italic;");
+                quoteLabel.setWrapText(true);
+                quoteLabel.setTextAlignment(TextAlignment.CENTER);
+
+                VBox authorBox = new VBox(5);
+                authorBox.setAlignment(Pos.CENTER);
+                Label nameLabel = new Label("- " + expertName);
+                nameLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 18px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+                Label credLabel = new Label(credentials);
+                credLabel.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 14px; -fx-font-family: 'Segoe UI', sans-serif;");
+                authorBox.getChildren().addAll(nameLabel, credLabel);
+
+                contentBox.getChildren().addAll(quoteMark, quoteLabel, authorBox);
+                imageArea.getChildren().add(contentBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+                Label captionLabel = new Label("Ethos \u2022 " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                return post;
+        }
+
+        // --- LOGOS: STATISTICS POST ---
+        private VBox createStatPost(String source, String bigNumber, String statDesc, String caption) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.web("#4facfe"));
+                Label userLabel = new Label("Data & Research");
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #000428, #004e92); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox contentBox = new VBox(15);
+                contentBox.setAlignment(Pos.CENTER);
+                contentBox.setPadding(new Insets(30));
+
+                Label numberLabel = new Label(bigNumber);
+                numberLabel.setStyle(
+                                "-fx-text-fill: #00f2fe; -fx-font-size: 72px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,242,254,0.5), 10, 0, 0, 0);");
+
+                Label descLabel = new Label(statDesc);
+                descLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 20px; -fx-font-family: 'Segoe UI', sans-serif;");
+                descLabel.setWrapText(true);
+                descLabel.setTextAlignment(TextAlignment.CENTER);
+
+                Label sourceLabel = new Label("Source: " + source);
+                sourceLabel.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.5); -fx-font-size: 12px; -fx-font-family: 'Segoe UI', sans-serif;");
+
+                contentBox.getChildren().addAll(numberLabel, descLabel, sourceLabel);
+                imageArea.getChildren().add(contentBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+                Label captionLabel = new Label("Logos \u2022 " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                return post;
+        }
+
+        // --- PATHOS: EMOTIONAL APPEAL POST ---
+        private VBox createPathosPost(String username, String boldStatement, String subStatement, String caption) {
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+                Circle avatar = new Circle(16, Color.web("#ff416c"));
+                Label userLabel = new Label(username);
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: linear-gradient(to bottom right, #ff4b2b, #ff416c); -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(400);
+
+                VBox contentBox = new VBox(20);
+                contentBox.setAlignment(Pos.CENTER);
+                contentBox.setPadding(new Insets(40));
+
+                Label boldLabel = new Label(boldStatement);
+                boldLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-size: 28px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+                boldLabel.setWrapText(true);
+                boldLabel.setTextAlignment(TextAlignment.CENTER);
+
+                Label subLabel = new Label(subStatement);
+                subLabel.setStyle(
+                                "-fx-text-fill: rgba(255,255,255,0.9); -fx-font-size: 18px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-style: italic;");
+                subLabel.setWrapText(true);
+                subLabel.setTextAlignment(TextAlignment.CENTER);
+
+                contentBox.getChildren().addAll(boldLabel, subLabel);
+                imageArea.getChildren().add(contentBox);
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+                Label captionLabel = new Label("Pathos \u2022 " + caption);
+                captionLabel.setStyle(
+                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
+                captionLabel.setWrapText(true);
+
+                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                return post;
+        }
+
+        // --- IMAGE METADATA ---
+        private static class ImageMetadata {
+                String username;
+                String caption;
+                double rotation;
+
+                ImageMetadata(String u, String c, double r) {
+                        this.username = u;
+                        this.caption = c;
+                        this.rotation = r;
+                }
+        }
+
+        private ImageMetadata getMetadataForImage(String filename) {
+                if (filename.equals("IMG_8083.jpeg"))
+                        return new ImageMetadata("sarah.explores", "Made a new friend today!", 90);
+                if (filename.equals("IMG_8101.jpeg"))
+                        return new ImageMetadata("jake.golfs",
+                                        "Perfect day for a round of golf. That view of the mountains is unbeatable. \u26f3\ufe0f\u26f0\ufe0f",
+                                        90);
+                if (filename.equals("IMG_8104.jpeg"))
+                        return new ImageMetadata("emily.designs",
+                                        "Stunning estate and gardens. The hydrangeas are in full bloom! \ud83c\udf38\ud83c\udfdb\ufe0f",
+                                        0);
+                if (filename.equals("IMG_8295.jpeg"))
+                        return new ImageMetadata("cafe.hopper.dan",
+                                        "A proper toasted sandwich and fresh juice to start the morning right. \ud83e\udd6a\ud83e\uddc3",
+                                        90);
+                if (filename.equals("IMG_8602.jpeg"))
+                        return new ImageMetadata("plant.mom.chloe",
+                                        "Lost inside this beautiful glass conservatory. Look at those giant banana leaves! \ud83c\udf3f\ud83c\udf31",
+                                        90);
+
+                return new ImageMetadata("unknown_user", "Just another post in the void...", 0);
+        }
+
+        // --- IMAGE POST ---
+        private VBox createImagePost(String imagePath) {
+                String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+                ImageMetadata meta = getMetadataForImage(filename);
+                String username = meta.username;
+                String caption = meta.caption;
+                double rotation = meta.rotation;
+
+                VBox post = new VBox();
+                post.getStyleClass().add("post-container");
+                post.setMinHeight(750);
+                post.setStyle("-fx-background-color: black;");
+
+                HBox header = new HBox(10);
+                header.setAlignment(Pos.CENTER_LEFT);
+                header.setPadding(new Insets(15, 15, 10, 15));
+
+                // Random color generation logic
+                int hash = username.hashCode();
+                String colorHex = String.format("#%06x", (hash & 0xFFFFFF) | 0x444444);
+                Circle avatar = new Circle(16, Color.web(colorHex));
+
+                Label userLabel = new Label(username);
+                userLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
+                header.getChildren().addAll(avatar, userLabel);
+
+                StackPane imageArea = new StackPane();
+                imageArea.setStyle(
+                                "-fx-background-color: #111111; -fx-background-radius: 15;");
+                VBox.setMargin(imageArea, new Insets(0, 10, 0, 10));
+                imageArea.setMinHeight(450);
+                imageArea.setMaxHeight(450);
+                imageArea.setMinWidth(360);
+                imageArea.setMaxWidth(360);
+
+                try {
+                        java.io.InputStream is = getClass().getResourceAsStream(imagePath);
+                        if (is != null) {
+                                javafx.scene.image.Image img = new javafx.scene.image.Image(is);
+                                javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView(img);
+
+                                double targetWidth = 360;
+                                double targetHeight = 450;
+
+                                double preRotWidth = targetWidth;
+                                double preRotHeight = targetHeight;
+                                if (rotation == 90 || rotation == -90 || rotation == 270) {
+                                        preRotWidth = targetHeight;
+                                        preRotHeight = targetWidth;
+                                }
+
+                                double imgW = img.getWidth();
+                                double imgH = img.getHeight();
+
+                                double targetRatio = preRotWidth / preRotHeight;
+                                double imgRatio = imgW / imgH;
+
+                                double cropW, cropH, cropX, cropY;
+
+                                if (imgRatio > targetRatio) {
+                                        cropH = imgH;
+                                        cropW = imgH * targetRatio;
+                                        cropX = (imgW - cropW) / 2;
+                                        cropY = 0;
+                                } else {
+                                        cropW = imgW;
+                                        cropH = imgW / targetRatio;
+                                        cropX = 0;
+                                        cropY = (imgH - cropH) / 2;
+                                }
+
+                                imageView.setViewport(new javafx.geometry.Rectangle2D(cropX, cropY, cropW, cropH));
+                                imageView.setFitWidth(preRotWidth);
+                                imageView.setFitHeight(preRotHeight);
+                                imageView.setPreserveRatio(true);
+                                imageView.setRotate(rotation);
+
+                                // Clip to rounded rectangle
+                                javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(preRotWidth,
+                                                preRotHeight);
+                                clip.setArcWidth(30);
+                                clip.setArcHeight(30);
+                                imageView.setClip(clip);
+
+                                imageArea.getChildren().add(imageView);
+                        } else {
+                                Label error = new Label("Image not found: " + imagePath);
+                                error.setTextFill(Color.WHITE);
+                                imageArea.getChildren().add(error);
+                        }
+                } catch (Exception e) {
+                        Label error = new Label("Error loading image");
+                        error.setTextFill(Color.WHITE);
+                        imageArea.getChildren().add(error);
+                }
+
+                Object[] actionRes = createActionBar();
+                HBox actions = (HBox) actionRes[0];
+                addDoubleTapToLike(imageArea, (Button) actionRes[1]);
+
+                javafx.scene.text.Text userText = new javafx.scene.text.Text(username + " ");
+                userText.setStyle(
+                                "-fx-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-font-weight: bold;");
+
+                javafx.scene.text.Text captionTextObj = new javafx.scene.text.Text(caption);
+                captionTextObj.setStyle(
+                                "-fx-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px;");
+
+                javafx.scene.text.TextFlow captionFlow = new javafx.scene.text.TextFlow(userText, captionTextObj);
+                captionFlow.setPadding(new Insets(5, 15, 20, 15));
+
+                post.getChildren().addAll(header, imageArea, actions, captionFlow);
+                return post;
+        }
+
+        public static void main(String[] args) {
+                launch(args);
+        }
 }
