@@ -45,6 +45,9 @@ public class Project extends Application {
         private Label dopamineLabel;
         private ProgressBar attentionBar;
         private Label attentionLabel;
+        private Label batteryLabel;
+        private Rectangle batteryFill;
+        private double currentBattery = 100.0;
 
         @Override
         public void start(Stage primaryStage) {
@@ -228,71 +231,77 @@ public class Project extends Application {
                 if (imgIndex < imageFiles.size())
                         feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
+                // --- Mental Health (Michael) ---
+                feed.getChildren().add(createStatPost("Child Mind Institute", "+13%",
+                        "According to the Child Mind Institute, the risk for depression increases by 13% per additional hour of daily social media use.",
+                        "Compounding interest on your mental health."));
+
+                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+
+                feed.getChildren().add(createPollPost("michael_mind",
+                        "Do you feel like social media pushes unrealistic body standards?", "Yes, absolutely.", "Not really.", 92, 8,
+                        "The Ideal Image",
+                        "According to the National Center for Health Research, 1 in 3 teen girls feel worse about their bodies due to Instagram.",
+                        "Prolonged exposure to edited images leads to severe concerns about body image."));
+
+                feed.getChildren().add(createStatPost("Clinical Psychological Science", "33%",
+                        "A 2017 study found the number of teens exhibiting high levels of depressive symptoms increased by 33% between 2010 and 2015 alongside smartphone adoption.",
+                        "Does that number surprise you?"));
+
+                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+
+                // --- Physical Health (Terry) ---
+                feed.getChildren().add(createStatPost("Cropink", "91%",
+                        "According to Cropink statistics, 91% of teens use social media daily for more than 3 hours on average.",
+                        "The average user spends over 6 years of their life scrolling."));
+
                 feed.getChildren().add(createPollPost("terry_physical",
-                                "Do you check your phone within 5 minutes of waking up?", "Yes, immediately.",
-                                "No, I wait.", 87, 13,
-                                "Sleep deprivation is the silent epidemic.",
-                                "Your brain is flooded with cortisol and dopamine before you even get out of bed.",
-                                "You saved yourself from an immediate stress response."));
+                        "73% of young adults believe social media negatively affects their mental health. Do you agree?", "Yes.", "No.", 73, 27,
+                        "The Physical Toll",
+                        "According to the 2023 SHARP Survey, only 38.4% of youth get 8+ hours of sleep. Screen time is strongly linked to this.",
+                        "Sleep loss is a risk factor for depression and excessive weight gain."));
 
-                if (imgIndex < imageFiles.size())
-                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
-                feed.getChildren().add(createAdPost("Dopamine Inc", "Unlock Premium Focus",
-                                "Subscribe now to reduce ads and distractions by 20%."));
+                feed.getChildren().add(createQuotePost("Dr. Michelle Hofmann", "Utah DHHS",
+                        "Bright screens keep people alert and are damaging to sleep cycles and sleep hygiene.",
+                        "Yet 25% of 16-17yo TikTok users are active between midnight and 5am."));
 
-                if (imgIndex < imageFiles.size())
-                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                feed.getChildren().add(createStatPost("The Vision Council", "65%",
+                        "A report by The Vision Council states 65 percent of Americans experience digital eye strain symptoms from gazing at screens.",
+                        "You can feel it right now, can't you?"));
 
-                // Logos Example
-                feed.getChildren().add(createStatPost("Global Web Index", "6 Years",
-                                "The average user will spend over 6 years of their entire life just scrolling on social media.",
-                                "Doomscrolling into oblivion."));
+                // --- Time & Productivity (Antaney) ---
+                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
-                feed.getChildren().add(createSliderPost("mental_health_check", "How burnt out are you feeling today?",
-                                "Be honest with yourself."));
+                feed.getChildren().add(createPollPost("antaney_time",
+                        "Have you ever found yourself 'zombie scrolling'?", "Yes, frequently.", "Rarely.", 85, 15,
+                        "The Flow State",
+                        "A KU study finds students with lower self-control use short-form video to escape, increasing procrastination.",
+                        "Your cognitive resources are being drained passively."));
 
-                if (imgIndex < imageFiles.size())
-                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
-
-                feed.getChildren().add(createPollPost("sarah_sleeps",
-                                "Have you ever sacrificed sleep to keep scrolling?", "All the time.", "Rarely.", 74, 26,
-                                "Why am I always tired?",
-                                "Sacrificing sleep for scrolling drastically increases anxiety and depression risks.",
-                                "Good. Sleep is your strongest defense mechanism."));
-
-                // Ethos Example
-                feed.getChildren().add(createQuotePost("Dr. Anna Lembke", "Stanford Addiction Medicine",
-                                "The smartphone is the modern-day hypodermic needle, delivering digital dopamine 24/7 for a wired generation.",
-                                "Focus is a superpower now."));
-
-                if (imgIndex < imageFiles.size())
-                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
-
-                feed.getChildren()
-                                .add(createPollPost("news_now", "Do you feel overwhelmed by the news on your feed?",
-                                                "Yes, constantly.",
-                                                "I just ignore it.", 92, 8, "Can't look away.",
-                                                "Algorithm-driven news feeds are designed to exploit negative bias.",
-                                                "Ignorance is bliss, but the algorithm still tracks you."));
-
-                // Another Pathos Example
                 feed.getChildren().add(createPathosPost("daily_reality",
-                                "You have 3 exams tomorrow.",
-                                "But the algorithm knows you better than you know yourself.",
-                                "Literally me."));
+                        "Research by Starvaggi et al. revealed that 52% of the information in the most viewed TikTok videos consists of misinformation.",
+                        "But you keep scrolling anyway.",
+                        "Diminished productivity and cognitive decline."));
 
-                // Ethos/Logos blend Example
-                feed.getChildren().add(createStatPost("National Institute of Health", "Elevated",
-                                "Stress hormones remain severely elevated for hours after doomscrolling, keeping your body in a constant state of 'fight or flight'.",
-                                "Your body thinks you are in danger."));
+                // --- NEW POLL: MEMORY & ATTENTION ---
+                feed.getChildren().add(createPollPost("the_algorithm",
+                        "Do you remember exactly what the last 5 posts were?", "Yes, I think so.", "No, not really.", 12, 88,
+                        "Amnesia",
+                        "The constant flow of information bypasses short-term memory encoding.",
+                        "You're just consuming to consume."));
 
-                feed.getChildren()
-                                .add(createPollPost("void_gazer", "Would you delete social media if you could?",
-                                                "Yes, but I can't.",
-                                                "No, I like it.", 65, 35, "Overloaded and underwhelmed.",
-                                                "The system is designed to make leaving feel impossible.",
-                                                "Are you sure, or has it just become your new normal?"));
+                feed.getChildren().add(createPathosPost("brain_rot",
+                        "Doomscrolling severely fractures your attention span.",
+                        "You are training your brain to need a new stimulus every 3 seconds.",
+                        "No wonder you can't focus on your homework."));
+
+                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+
+                feed.getChildren().add(createStatPost("Harvard Health", "Doomscrolling",
+                        "According to Harvard experts, physical effects of doomscrolling include nausea, headaches, muscle tension, and elevated blood pressure.",
+                        "Your body thinks you are in danger."));
 
                 // Add remaining images at the end
                 int nameIdx = 0;
@@ -369,10 +378,34 @@ public class Project extends Application {
                 timeLabel.setStyle(
                                 "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
 
+                batteryLabel = new Label("100%");
+                batteryLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 12px;");
+
+                HBox batteryBox = new HBox(4);
+                batteryBox.setAlignment(Pos.CENTER);
+                
+                Rectangle batBody = new Rectangle(20, 10);
+                batBody.setFill(Color.TRANSPARENT);
+                batBody.setStroke(Color.WHITE);
+                batBody.setStrokeWidth(1.5);
+                batBody.setArcWidth(3); batBody.setArcHeight(3);
+                
+                batteryFill = new Rectangle(18, 8, Color.WHITE);
+                batteryFill.setArcWidth(2); batteryFill.setArcHeight(2);
+                
+                Rectangle batTip = new Rectangle(1.5, 4, Color.WHITE);
+                batTip.setArcWidth(1); batTip.setArcHeight(1);
+                
+                StackPane batteryIcon = new StackPane(batBody, batteryFill);
+                StackPane.setAlignment(batteryFill, Pos.CENTER_LEFT);
+                StackPane.setMargin(batteryFill, new Insets(0, 0, 0, 1)); // offset slightly
+                
+                batteryBox.getChildren().addAll(batteryLabel, batteryIcon, batTip);
+
                 Region statusSpacer = new Region();
                 HBox.setHgrow(statusSpacer, Priority.ALWAYS);
 
-                statusBar.getChildren().addAll(timeLabel, statusSpacer);
+                statusBar.getChildren().addAll(timeLabel, statusSpacer, batteryBox);
                 StackPane.setAlignment(statusBar, Pos.TOP_CENTER);
 
                 // --- NOTIFICATIONS ---
@@ -391,7 +424,12 @@ public class Project extends Application {
                                 { "Calendar", "Calculus Exam",
                                                 "Calculus III Final Exam in 2 days. Make sure to review chapter 7." },
                                 { "Reminders", "Read Chapter 4",
-                                                "You need to finish reading chapter 4 for History class." }
+                                                "You need to finish reading chapter 4 for History class." },
+                                { "Messages", "Alex", "Hey, are you ready for tomorrow's quiz? I haven't started studying." },
+                                { "Messages", "Project Group", "Can you finish your part of the project tonight? It's due tomorrow." },
+                                { "Messages", "Dad", "Did you finish your homework? You've been on your phone for hours." },
+                                { "Canvas", "Assignment Graded", "Your recent exam was graded: 62% (D-)" },
+                                { "Email", "Professor Smith", "Reminder: Missing Assignments" }
                 };
 
                 Timeline notifTimeline = new Timeline(new KeyFrame(Duration.seconds(10), ev -> {
@@ -400,6 +438,14 @@ public class Project extends Application {
                 }));
                 notifTimeline.setCycleCount(Timeline.INDEFINITE);
                 notifTimeline.play();
+
+                // --- BATTERY TIMER ---
+                Timeline batteryTimer = new Timeline(new KeyFrame(Duration.seconds(3), ev -> {
+                        currentBattery -= 0.5;
+                        updateBatteryUI();
+                }));
+                batteryTimer.setCycleCount(Timeline.INDEFINITE);
+                batteryTimer.play();
 
                 phoneFrame = new StackPane(scrollPane, statusBar, notificationContainer);
                 // Force phone frame size to prevent "iPad" widening effect
@@ -633,6 +679,23 @@ public class Project extends Application {
 
                 attentionBar.setProgress(1.0 - (progress * 0.8));
                 attentionLabel.setText(String.format("Attention Span: %.1fs", 8.0 - (progress * 6.0)));
+
+                // Update battery based on scroll
+                currentBattery -= 0.8;
+                updateBatteryUI();
+        }
+
+        private void updateBatteryUI() {
+                if (currentBattery < 1.0) currentBattery = 1.0;
+                batteryLabel.setText(String.format("%.0f%%", currentBattery));
+                batteryFill.setWidth(18.0 * (currentBattery / 100.0));
+                if (currentBattery <= 20) {
+                        batteryFill.setFill(Color.RED);
+                } else if (currentBattery <= 50) {
+                        batteryFill.setFill(Color.YELLOW);
+                } else {
+                        batteryFill.setFill(Color.WHITE);
+                }
         }
 
         // --- NOTIFICATION HELPER ---
