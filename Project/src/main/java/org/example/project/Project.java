@@ -45,9 +45,22 @@ public class Project extends Application {
         private Label dopamineLabel;
         private ProgressBar attentionBar;
         private Label attentionLabel;
+        private ProgressBar depressionBar;
+        private Label depressionLabel;
+        private ProgressBar eyeStrainBar;
+        private Label eyeStrainLabel;
         private Label batteryLabel;
         private Rectangle batteryFill;
         private double currentBattery = 100.0;
+        private Label timeLabel;
+        private StackPane alarmOverlay;
+        private Timeline notifTimeline;
+        private Timeline batteryTimer;
+        private Label engagementWarning;
+        private double depressionModifier = 0.0;
+        private double eyeStrainModifier = 0.0;
+        private double attentionModifier = 0.0;
+        private int totalPosts;
 
         @Override
         public void start(Stage primaryStage) {
@@ -82,8 +95,28 @@ public class Project extends Application {
                 attentionLabel.setStyle(
                                 "-fx-text-fill: #444444; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
 
+                depressionBar = new ProgressBar(0.0);
+                depressionBar.setPrefWidth(200);
+                depressionBar.setPrefHeight(15);
+                depressionBar.setStyle(
+                                "-fx-accent: #8b0000; -fx-control-inner-background: #e0e0e0; -fx-background-radius: 10;");
+
+                depressionLabel = new Label("Depressive Risk: +0%");
+                depressionLabel.setStyle(
+                                "-fx-text-fill: #444444; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+
+                eyeStrainBar = new ProgressBar(0.0);
+                eyeStrainBar.setPrefWidth(200);
+                eyeStrainBar.setPrefHeight(15);
+                eyeStrainBar.setStyle(
+                                "-fx-accent: #ff8c00; -fx-control-inner-background: #e0e0e0; -fx-background-radius: 10;");
+
+                eyeStrainLabel = new Label("Digital Eye Strain: 0%");
+                eyeStrainLabel.setStyle(
+                                "-fx-text-fill: #444444; -fx-font-size: 16px; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold;");
+
                 leftPanel = new VBox(15, hoursLabel, fatigueBar, dopamineLabel, dopamineBar, attentionLabel,
-                                attentionBar);
+                                attentionBar, depressionLabel, depressionBar, eyeStrainLabel, eyeStrainBar);
                 leftPanel.setAlignment(Pos.CENTER);
                 leftPanel.setPadding(new Insets(30));
                 leftPanel.setStyle("");
@@ -233,75 +266,92 @@ public class Project extends Application {
 
                 // --- Mental Health (Michael) ---
                 feed.getChildren().add(createStatPost("Child Mind Institute", "+13%",
-                        "According to the Child Mind Institute, the risk for depression increases by 13% per additional hour of daily social media use.",
-                        "Compounding interest on your mental health."));
+                                "According to the Child Mind Institute, the risk for depression increases by 13% per additional hour of daily social media use.",
+                                "Compounding interest on your mental health."));
 
-                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
                 feed.getChildren().add(createPollPost("michael_mind",
-                        "Do you feel like social media pushes unrealistic body standards?", "Yes, absolutely.", "Not really.", 92, 8,
-                        "The Ideal Image",
-                        "According to the National Center for Health Research, 1 in 3 teen girls feel worse about their bodies due to Instagram.",
-                        "Prolonged exposure to edited images leads to severe concerns about body image."));
+                                "Do you feel like social media pushes unrealistic body standards?", "Yes, absolutely.",
+                                "Not really.", 92, 8,
+                                "The Ideal Image",
+                                "According to the National Center for Health Research, 1 in 3 teen girls feel worse about their bodies due to Instagram.",
+                                "Prolonged exposure to edited images leads to severe concerns about body image.",
+                                () -> { depressionModifier += 5.0; updateStatsUI(); },
+                                () -> { depressionModifier -= 2.0; updateStatsUI(); }));
 
                 feed.getChildren().add(createStatPost("Clinical Psychological Science", "33%",
-                        "A 2017 study found the number of teens exhibiting high levels of depressive symptoms increased by 33% between 2010 and 2015 alongside smartphone adoption.",
-                        "Does that number surprise you?"));
+                                "A 2017 study found the number of teens exhibiting high levels of depressive symptoms increased by 33% between 2010 and 2015 alongside smartphone adoption.",
+                                "Does that number surprise you?"));
 
-                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
                 // --- Physical Health (Terry) ---
                 feed.getChildren().add(createStatPost("Cropink", "91%",
-                        "According to Cropink statistics, 91% of teens use social media daily for more than 3 hours on average.",
-                        "The average user spends over 6 years of their life scrolling."));
+                                "According to Cropink statistics, 91% of teens use social media daily for more than 3 hours on average.",
+                                "The average user spends over 6 years of their life scrolling."));
 
                 feed.getChildren().add(createPollPost("terry_physical",
-                        "73% of young adults believe social media negatively affects their mental health. Do you agree?", "Yes.", "No.", 73, 27,
-                        "The Physical Toll",
-                        "According to the 2023 SHARP Survey, only 38.4% of youth get 8+ hours of sleep. Screen time is strongly linked to this.",
-                        "Sleep loss is a risk factor for depression and excessive weight gain."));
+                                "73% of young adults believe social media negatively affects their mental health. Do you agree?",
+                                "Yes.", "No.", 73, 27,
+                                "The Physical Toll",
+                                "According to the 2023 SHARP Survey, only 38.4% of youth get 8+ hours of sleep. Screen time is strongly linked to this.",
+                                "Sleep loss is a risk factor for depression and excessive weight gain.",
+                                () -> { depressionModifier += 5.0; eyeStrainModifier += 5.0; updateStatsUI(); },
+                                () -> { depressionModifier -= 3.0; eyeStrainModifier -= 2.0; updateStatsUI(); }));
 
-                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
                 feed.getChildren().add(createQuotePost("Dr. Michelle Hofmann", "Utah DHHS",
-                        "Bright screens keep people alert and are damaging to sleep cycles and sleep hygiene.",
-                        "Yet 25% of 16-17yo TikTok users are active between midnight and 5am."));
+                                "Bright screens keep people alert and are damaging to sleep cycles and sleep hygiene.",
+                                "Yet 25% of 16-17yo TikTok users are active between midnight and 5am."));
 
                 feed.getChildren().add(createStatPost("The Vision Council", "65%",
-                        "A report by The Vision Council states 65 percent of Americans experience digital eye strain symptoms from gazing at screens.",
-                        "You can feel it right now, can't you?"));
+                                "A report by The Vision Council states 65 percent of Americans experience digital eye strain symptoms from gazing at screens.",
+                                "You can feel it right now, can't you?"));
 
                 // --- Time & Productivity (Antaney) ---
-                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
                 feed.getChildren().add(createPollPost("antaney_time",
-                        "Have you ever found yourself 'zombie scrolling'?", "Yes, frequently.", "Rarely.", 85, 15,
-                        "The Flow State",
-                        "A KU study finds students with lower self-control use short-form video to escape, increasing procrastination.",
-                        "Your cognitive resources are being drained passively."));
+                                "Have you ever found yourself 'zombie scrolling'?", "Yes, frequently.", "Rarely.", 85,
+                                15,
+                                "The Flow State",
+                                "A KU study finds students with lower self-control use short-form video to escape, increasing procrastination.",
+                                "Your cognitive resources are being drained passively.",
+                                () -> { attentionModifier -= 1.0; eyeStrainModifier += 10.0; updateStatsUI(); },
+                                () -> { attentionModifier += 0.5; eyeStrainModifier -= 5.0; updateStatsUI(); }));
 
                 feed.getChildren().add(createPathosPost("daily_reality",
-                        "Research by Starvaggi et al. revealed that 52% of the information in the most viewed TikTok videos consists of misinformation.",
-                        "But you keep scrolling anyway.",
-                        "Diminished productivity and cognitive decline."));
+                                "Research by Starvaggi et al. revealed that 52% of the information in the most viewed TikTok videos consists of misinformation.",
+                                "But you keep scrolling anyway.",
+                                "Diminished productivity and cognitive decline."));
 
                 // --- NEW POLL: MEMORY & ATTENTION ---
                 feed.getChildren().add(createPollPost("the_algorithm",
-                        "Do you remember exactly what the last 5 posts were?", "Yes, I think so.", "No, not really.", 12, 88,
-                        "Amnesia",
-                        "The constant flow of information bypasses short-term memory encoding.",
-                        "You're just consuming to consume."));
+                                "Do you remember exactly what the last 5 posts were?", "Yes, I think so.",
+                                "No, not really.", 12, 88,
+                                "Amnesia",
+                                "The constant flow of information bypasses short-term memory encoding.",
+                                "You're just consuming to consume.",
+                                () -> { attentionModifier += 1.0; updateStatsUI(); },
+                                () -> { attentionModifier -= 2.0; depressionModifier += 5.0; updateStatsUI(); }));
 
                 feed.getChildren().add(createPathosPost("brain_rot",
-                        "Doomscrolling severely fractures your attention span.",
-                        "You are training your brain to need a new stimulus every 3 seconds.",
-                        "No wonder you can't focus on your homework."));
+                                "Doomscrolling severely fractures your attention span.",
+                                "You are training your brain to need a new stimulus every 3 seconds.",
+                                "No wonder you can't focus on your homework."));
 
-                if (imgIndex < imageFiles.size()) feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
+                if (imgIndex < imageFiles.size())
+                        feed.getChildren().add(createImagePost("/org/example/project/" + imageFiles.get(imgIndex++)));
 
                 feed.getChildren().add(createStatPost("Harvard Health", "Doomscrolling",
-                        "According to Harvard experts, physical effects of doomscrolling include nausea, headaches, muscle tension, and elevated blood pressure.",
-                        "Your body thinks you are in danger."));
+                                "According to Harvard experts, physical effects of doomscrolling include nausea, headaches, muscle tension, and elevated blood pressure.",
+                                "Your body thinks you are in danger."));
 
                 // Add remaining images at the end
                 int nameIdx = 0;
@@ -314,7 +364,7 @@ public class Project extends Application {
                         }
                 }
 
-                int totalPosts = feed.getChildren().size();
+                totalPosts = feed.getChildren().size();
 
                 ScrollPane scrollPane = new ScrollPane(feed);
                 scrollPane.setFitToWidth(true);
@@ -335,11 +385,13 @@ public class Project extends Application {
                         if (Boolean.TRUE.equals(currentPost.getProperties().get("isPoll")) &&
                                         !Boolean.TRUE.equals(currentPost.getProperties().get("pollResponded"))) {
                                 shakePost(currentPost);
+                                showEngagementWarning("Please vote to continue scrolling.");
                                 return;
                         }
                         if (Boolean.TRUE.equals(currentPost.getProperties().get("isAd")) &&
                                         !Boolean.TRUE.equals(currentPost.getProperties().get("adFinished"))) {
                                 shakePost(currentPost);
+                                showEngagementWarning("Please wait to skip ad.");
                                 return;
                         }
 
@@ -374,32 +426,36 @@ public class Project extends Application {
                 statusBar.setMaxHeight(Region.USE_PREF_SIZE);
                 statusBar.setMouseTransparent(true);
 
-                Label timeLabel = new Label("9:41");
+                timeLabel = new Label("11:00");
                 timeLabel.setStyle(
                                 "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px;");
 
                 batteryLabel = new Label("100%");
-                batteryLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 12px;");
+                batteryLabel.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 12px;");
 
                 HBox batteryBox = new HBox(4);
                 batteryBox.setAlignment(Pos.CENTER);
-                
+
                 Rectangle batBody = new Rectangle(20, 10);
                 batBody.setFill(Color.TRANSPARENT);
                 batBody.setStroke(Color.WHITE);
                 batBody.setStrokeWidth(1.5);
-                batBody.setArcWidth(3); batBody.setArcHeight(3);
-                
+                batBody.setArcWidth(3);
+                batBody.setArcHeight(3);
+
                 batteryFill = new Rectangle(18, 8, Color.WHITE);
-                batteryFill.setArcWidth(2); batteryFill.setArcHeight(2);
-                
+                batteryFill.setArcWidth(2);
+                batteryFill.setArcHeight(2);
+
                 Rectangle batTip = new Rectangle(1.5, 4, Color.WHITE);
-                batTip.setArcWidth(1); batTip.setArcHeight(1);
-                
+                batTip.setArcWidth(1);
+                batTip.setArcHeight(1);
+
                 StackPane batteryIcon = new StackPane(batBody, batteryFill);
                 StackPane.setAlignment(batteryFill, Pos.CENTER_LEFT);
                 StackPane.setMargin(batteryFill, new Insets(0, 0, 0, 1)); // offset slightly
-                
+
                 batteryBox.getChildren().addAll(batteryLabel, batteryIcon, batTip);
 
                 Region statusSpacer = new Region();
@@ -425,14 +481,17 @@ public class Project extends Application {
                                                 "Calculus III Final Exam in 2 days. Make sure to review chapter 7." },
                                 { "Reminders", "Read Chapter 4",
                                                 "You need to finish reading chapter 4 for History class." },
-                                { "Messages", "Alex", "Hey, are you ready for tomorrow's quiz? I haven't started studying." },
-                                { "Messages", "Project Group", "Can you finish your part of the project tonight? It's due tomorrow." },
-                                { "Messages", "Dad", "Did you finish your homework? You've been on your phone for hours." },
+                                { "Messages", "Alex",
+                                                "Hey, are you ready for tomorrow's quiz? I haven't started studying." },
+                                { "Messages", "Project Group",
+                                                "Can you finish your part of the project tonight? It's due tomorrow." },
+                                { "Messages", "Dad",
+                                                "Did you finish your homework? You've been on your phone for hours." },
                                 { "Canvas", "Assignment Graded", "Your recent exam was graded: 62% (D-)" },
                                 { "Email", "Professor Smith", "Reminder: Missing Assignments" }
                 };
 
-                Timeline notifTimeline = new Timeline(new KeyFrame(Duration.seconds(10), ev -> {
+                notifTimeline = new Timeline(new KeyFrame(Duration.seconds(10), ev -> {
                         int idx = (int) (Math.random() * notifData.length);
                         showNotification(notifData[idx][0], notifData[idx][1], notifData[idx][2]);
                 }));
@@ -440,14 +499,54 @@ public class Project extends Application {
                 notifTimeline.play();
 
                 // --- BATTERY TIMER ---
-                Timeline batteryTimer = new Timeline(new KeyFrame(Duration.seconds(3), ev -> {
+                batteryTimer = new Timeline(new KeyFrame(Duration.seconds(3), ev -> {
                         currentBattery -= 0.5;
                         updateBatteryUI();
                 }));
                 batteryTimer.setCycleCount(Timeline.INDEFINITE);
                 batteryTimer.play();
 
-                phoneFrame = new StackPane(scrollPane, statusBar, notificationContainer);
+                // --- ALARM OVERLAY ---
+                alarmOverlay = new StackPane();
+                alarmOverlay.setStyle("-fx-background-color: rgba(10, 10, 10, 0.95); -fx-background-radius: 40;");
+                alarmOverlay.setOpacity(0);
+                alarmOverlay.setMouseTransparent(true);
+
+                VBox alarmContent = new VBox(20);
+                alarmContent.setAlignment(Pos.CENTER);
+
+                Label alarmTime = new Label("6:00");
+                alarmTime.setStyle(
+                                "-fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 80px; -fx-font-weight: bold;");
+
+                Label alarmSub = new Label("Alarm");
+                alarmSub.setStyle(
+                                "-fx-text-fill: #aaaaaa; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 24px;");
+
+                Button stopButton = new Button("Stop");
+                stopButton.setStyle(
+                                "-fx-background-color: #ff3366; -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 15 60;");
+                stopButton.setOnAction(e -> {
+                        reflectionText.setText("The cycle begins again.");
+                        reflectionText.setStyle(
+                                        "-fx-text-fill: #ff3366; -fx-font-size: 28px; -fx-font-family: 'Georgia', serif; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,51,102,0.8), 15, 0, 0, 0);");
+                        if (reflectionTimeline != null)
+                                reflectionTimeline.pause();
+                        System.exit(0);
+                });
+
+                alarmContent.getChildren().addAll(alarmTime, alarmSub, stopButton);
+                alarmOverlay.getChildren().add(alarmContent);
+
+                // --- ENGAGEMENT WARNING ---
+                engagementWarning = new Label("");
+                engagementWarning.setStyle("-fx-background-color: rgba(255, 51, 51, 0.9); -fx-text-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20; -fx-background-radius: 20;");
+                engagementWarning.setOpacity(0);
+                engagementWarning.setMouseTransparent(true);
+                engagementWarning.setTranslateY(-50);
+                StackPane.setAlignment(engagementWarning, Pos.TOP_CENTER);
+
+                phoneFrame = new StackPane(scrollPane, statusBar, notificationContainer, alarmOverlay, engagementWarning);
                 // Force phone frame size to prevent "iPad" widening effect
                 phoneFrame.setMinSize(380, 750);
                 phoneFrame.setMaxSize(380, 750);
@@ -608,6 +707,35 @@ public class Project extends Application {
         }
 
         // --- ANIMATION HELPER ---
+        private void updateStatsUI() {
+                if (totalPosts <= 1) return;
+                double progress = (double) currentPostIndex / (totalPosts - 1);
+
+                fatigueBar.setProgress(progress);
+                hoursLabel.setText(String.format("Hours Wasted: %.1f", progress * 6));
+
+                dopamineBar.setProgress(1.0 - (progress * 0.9));
+                dopamineLabel.setText(String.format("Dopamine: %.0f%%", (1.0 - (progress * 0.9)) * 100));
+
+                double att = 8.0 - (progress * 6.0) + attentionModifier;
+                if (att < 1.0) att = 1.0;
+                if (att > 8.0) att = 8.0;
+                attentionBar.setProgress(att / 8.0);
+                attentionLabel.setText(String.format("Attention Span: %.1fs", att));
+
+                double dep = (progress * 33.0) + depressionModifier;
+                if (dep < 0) dep = 0;
+                if (dep > 100) dep = 100;
+                depressionBar.setProgress(dep / 100.0);
+                depressionLabel.setText(String.format("Depressive Risk: +%.0f%%", dep));
+
+                double eye = (progress * 65.0) + eyeStrainModifier;
+                if (eye < 0) eye = 0;
+                if (eye > 100) eye = 100;
+                eyeStrainBar.setProgress(eye / 100.0);
+                eyeStrainLabel.setText(String.format("Digital Eye Strain: %.0f%%", eye));
+        }
+
         private void snapToPost(ScrollPane scrollPane, int targetIndex, VBox feed, int totalPosts) {
                 isAnimating = true;
 
@@ -670,23 +798,38 @@ public class Project extends Application {
                 timeline.play();
 
                 // Update fatigue stats based on the new post index
+                updateStatsUI();
+
                 double progress = (double) targetIndex / (totalPosts - 1);
-                fatigueBar.setProgress(progress);
-                hoursLabel.setText(String.format("Hours Wasted: %.1f", progress * 6));
-
-                dopamineBar.setProgress(1.0 - (progress * 0.9));
-                dopamineLabel.setText(String.format("Dopamine: %.0f%%", (1.0 - (progress * 0.9)) * 100));
-
-                attentionBar.setProgress(1.0 - (progress * 0.8));
-                attentionLabel.setText(String.format("Attention Span: %.1fs", 8.0 - (progress * 6.0)));
-
+                
                 // Update battery based on scroll
                 currentBattery -= 0.8;
                 updateBatteryUI();
+
+                // Update clock (11 PM to 6 AM is 7 hours = 420 minutes)
+                int totalMinutesPassed = (int) (progress * 420);
+                int currentHour24 = (23 + (totalMinutesPassed / 60)) % 24;
+                int currentMinute = totalMinutesPassed % 60;
+                int displayHour = currentHour24 % 12;
+                if (displayHour == 0)
+                        displayHour = 12;
+                timeLabel.setText(String.format("%d:%02d", displayHour, currentMinute));
+
+                // Alarm overlay when hitting 6 AM
+                if (progress >= 1.0) {
+                        alarmOverlay.setOpacity(1.0);
+                        alarmOverlay.setMouseTransparent(false);
+                        if (notifTimeline != null) notifTimeline.pause();
+                        if (batteryTimer != null) batteryTimer.pause();
+                } else {
+                        alarmOverlay.setOpacity(0.0);
+                        alarmOverlay.setMouseTransparent(true);
+                }
         }
 
         private void updateBatteryUI() {
-                if (currentBattery < 1.0) currentBattery = 1.0;
+                if (currentBattery < 1.0)
+                        currentBattery = 1.0;
                 batteryLabel.setText(String.format("%.0f%%", currentBattery));
                 batteryFill.setWidth(18.0 * (currentBattery / 100.0));
                 if (currentBattery <= 20) {
@@ -759,25 +902,85 @@ public class Project extends Application {
                 appear.play();
         }
 
-        private Object[] createActionBar() {
+        private String formatLikes(int likes) {
+                if (likes < 10000) {
+                        return String.format(java.util.Locale.US, "%,d", likes);
+                } else if (likes < 1000000) {
+                        double k = likes / 1000.0;
+                        return String.format(java.util.Locale.US, "%.1fK", k);
+                } else {
+                        double m = likes / 1000000.0;
+                        return String.format(java.util.Locale.US, "%.1fM", m);
+                }
+        }
+
+        private void playBigHeartAnimation(StackPane imageArea) {
+                Label bigHeart = new Label("♥");
+                bigHeart.setStyle("-fx-text-fill: rgba(255, 51, 102, 0.8); -fx-font-size: 120px;");
+                imageArea.getChildren().add(bigHeart);
+
+                Timeline heartAnim = new Timeline(
+                                new KeyFrame(Duration.ZERO,
+                                                new KeyValue(bigHeart.scaleXProperty(), 0),
+                                                new KeyValue(bigHeart.scaleYProperty(), 0),
+                                                new KeyValue(bigHeart.opacityProperty(), 1)),
+                                new KeyFrame(Duration.millis(300),
+                                                new KeyValue(bigHeart.scaleXProperty(), 1.2,
+                                                                Interpolator.EASE_OUT),
+                                                new KeyValue(bigHeart.scaleYProperty(), 1.2,
+                                                                Interpolator.EASE_OUT)),
+                                new KeyFrame(Duration.millis(500),
+                                                new KeyValue(bigHeart.scaleXProperty(), 1,
+                                                                Interpolator.EASE_IN),
+                                                new KeyValue(bigHeart.scaleYProperty(), 1,
+                                                                Interpolator.EASE_IN)),
+                                new KeyFrame(Duration.millis(800),
+                                                new KeyValue(bigHeart.opacityProperty(), 1)),
+                                new KeyFrame(Duration.millis(1200),
+                                                new KeyValue(bigHeart.opacityProperty(), 0),
+                                                new KeyValue(bigHeart.scaleXProperty(), 1.5),
+                                                new KeyValue(bigHeart.scaleYProperty(), 1.5)));
+                heartAnim.setOnFinished(ev -> imageArea.getChildren().remove(bigHeart));
+                heartAnim.play();
+        }
+
+        private Object[] createActionBar(StackPane imageArea) {
+                VBox actionContainer = new VBox(5);
+                actionContainer.setPadding(new Insets(10, 15, 0, 15));
+
                 HBox actions = new HBox(15);
-                actions.setPadding(new Insets(10, 15, 0, 15));
                 Button likeBtn = new Button("♡");
                 likeBtn.setStyle(
                                 "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                
+                actions.getChildren().add(likeBtn);
+
+                int rawLikes = (int) (Math.random() * 5000000);
+                if (Math.random() > 0.5) rawLikes = (int) (Math.random() * 9999);
+                else if (Math.random() > 0.5) rawLikes = (int) (Math.random() * 999999);
+                if (rawLikes == 0) rawLikes = 1;
+
+                Label likesLabel = new Label(formatLikes(rawLikes) + " likes");
+                likesLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px;");
+
+                final int finalLikes = rawLikes;
                 likeBtn.setOnAction(e -> {
                         if (likeBtn.getText().equals("♡")) {
                                 likeBtn.setText("♥");
                                 likeBtn.setStyle(
                                                 "-fx-background-color: transparent; -fx-text-fill: #ff3366; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                                likesLabel.setText(formatLikes(finalLikes + 1) + " likes");
+                                playBigHeartAnimation(imageArea);
                         } else {
                                 likeBtn.setText("♡");
                                 likeBtn.setStyle(
                                                 "-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 26px; -fx-cursor: hand; -fx-padding: 0;");
+                                likesLabel.setText(formatLikes(finalLikes) + " likes");
                         }
                 });
-                actions.getChildren().add(likeBtn);
-                return new Object[] { actions, likeBtn };
+
+                actionContainer.getChildren().addAll(actions, likesLabel);
+                return new Object[] { actionContainer, likeBtn };
         }
 
         private void addDoubleTapToLike(StackPane imageArea, Button likeBtn) {
@@ -785,34 +988,9 @@ public class Project extends Application {
                         if (e.getClickCount() == 2) {
                                 if (!likeBtn.getText().equals("♥")) {
                                         likeBtn.fire();
+                                } else {
+                                        playBigHeartAnimation(imageArea);
                                 }
-                                Label bigHeart = new Label("♥");
-                                bigHeart.setStyle("-fx-text-fill: rgba(255, 51, 102, 0.8); -fx-font-size: 120px;");
-                                imageArea.getChildren().add(bigHeart);
-
-                                Timeline heartAnim = new Timeline(
-                                                new KeyFrame(Duration.ZERO,
-                                                                new KeyValue(bigHeart.scaleXProperty(), 0),
-                                                                new KeyValue(bigHeart.scaleYProperty(), 0),
-                                                                new KeyValue(bigHeart.opacityProperty(), 1)),
-                                                new KeyFrame(Duration.millis(300),
-                                                                new KeyValue(bigHeart.scaleXProperty(), 1.2,
-                                                                                Interpolator.EASE_OUT),
-                                                                new KeyValue(bigHeart.scaleYProperty(), 1.2,
-                                                                                Interpolator.EASE_OUT)),
-                                                new KeyFrame(Duration.millis(500),
-                                                                new KeyValue(bigHeart.scaleXProperty(), 1,
-                                                                                Interpolator.EASE_IN),
-                                                                new KeyValue(bigHeart.scaleYProperty(), 1,
-                                                                                Interpolator.EASE_IN)),
-                                                new KeyFrame(Duration.millis(800),
-                                                                new KeyValue(bigHeart.opacityProperty(), 1)),
-                                                new KeyFrame(Duration.millis(1200),
-                                                                new KeyValue(bigHeart.opacityProperty(), 0),
-                                                                new KeyValue(bigHeart.scaleXProperty(), 1.5),
-                                                                new KeyValue(bigHeart.scaleYProperty(), 1.5)));
-                                heartAnim.setOnFinished(ev -> imageArea.getChildren().remove(bigHeart));
-                                heartAnim.play();
                         }
                 });
         }
@@ -826,6 +1004,19 @@ public class Project extends Application {
                                 new KeyFrame(Duration.millis(200), new KeyValue(node.translateXProperty(), 10)),
                                 new KeyFrame(Duration.millis(250), new KeyValue(node.translateXProperty(), 0)));
                 shake.play();
+        }
+
+        private void showEngagementWarning(String msg) {
+                if (engagementWarning.getOpacity() > 0) return;
+                
+                engagementWarning.setText(msg);
+                Timeline anim = new Timeline(
+                        new KeyFrame(Duration.ZERO, new KeyValue(engagementWarning.opacityProperty(), 0), new KeyValue(engagementWarning.translateYProperty(), -50)),
+                        new KeyFrame(Duration.millis(300), new KeyValue(engagementWarning.opacityProperty(), 1), new KeyValue(engagementWarning.translateYProperty(), 60)),
+                        new KeyFrame(Duration.millis(2000), new KeyValue(engagementWarning.opacityProperty(), 1), new KeyValue(engagementWarning.translateYProperty(), 60)),
+                        new KeyFrame(Duration.millis(2300), new KeyValue(engagementWarning.opacityProperty(), 0), new KeyValue(engagementWarning.translateYProperty(), -50))
+                );
+                anim.play();
         }
 
         // --- INTERACTIVE SLIDER POST ---
@@ -882,8 +1073,8 @@ public class Project extends Application {
                 contentBox.getChildren().addAll(questionLabel, slider, submitBtn);
                 imageArea.getChildren().add(contentBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
 
                 Label captionLabel = new Label(username + " " + caption);
@@ -941,8 +1132,8 @@ public class Project extends Application {
                 contentBox.getChildren().addAll(titleLabel, skipBtn);
                 imageArea.getChildren().add(contentBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
 
                 Label captionLabel = new Label(brand + " " + caption);
@@ -957,7 +1148,7 @@ public class Project extends Application {
 
         // --- POLL POST BUILDER ---
         private VBox createPollPost(String username, String question, String option1, String option2, int opt1Pct,
-                        int opt2Pct, String caption, String response1, String response2) {
+                        int opt2Pct, String caption, String response1, String response2, Runnable onOpt1, Runnable onOpt2) {
                 VBox post = new VBox();
                 post.getStyleClass().add("post-container");
                 post.setMinHeight(750);
@@ -1015,6 +1206,7 @@ public class Project extends Application {
                         btn1.setDisable(true);
                         btn2.setDisable(true);
                         triggerPollHighlight(response1);
+                        if (onOpt1 != null) onOpt1.run();
                 });
 
                 btn2.setOnAction(e -> {
@@ -1028,22 +1220,19 @@ public class Project extends Application {
                         btn1.setDisable(true);
                         btn2.setDisable(true);
                         triggerPollHighlight(response2);
+                        if (onOpt2 != null) onOpt2.run();
                 });
 
                 buttonsBox.getChildren().addAll(btn1, btn2);
                 pollBox.getChildren().addAll(questionLabel, buttonsBox);
                 imageArea.getChildren().add(pollBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
 
-                Label captionLabel = new Label(username + " " + caption);
-                captionLabel.setStyle(
-                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
-                captionLabel.setWrapText(true);
-
-                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                VBox comments = createCommentSection(username, caption);
+                post.getChildren().addAll(header, imageArea, actions, comments);
                 return post;
         }
 
@@ -1097,15 +1286,11 @@ public class Project extends Application {
                 contentBox.getChildren().addAll(quoteMark, quoteLabel, authorBox);
                 imageArea.getChildren().add(contentBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
-                Label captionLabel = new Label("Ethos \u2022 " + caption);
-                captionLabel.setStyle(
-                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
-                captionLabel.setWrapText(true);
-
-                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                VBox comments = createCommentSection("ethos_research", caption);
+                post.getChildren().addAll(header, imageArea, actions, comments);
                 return post;
         }
 
@@ -1152,15 +1337,11 @@ public class Project extends Application {
                 contentBox.getChildren().addAll(numberLabel, descLabel, sourceLabel);
                 imageArea.getChildren().add(contentBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
-                Label captionLabel = new Label("Logos \u2022 " + caption);
-                captionLabel.setStyle(
-                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
-                captionLabel.setWrapText(true);
-
-                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                VBox comments = createCommentSection("logos_research", caption);
+                post.getChildren().addAll(header, imageArea, actions, comments);
                 return post;
         }
 
@@ -1205,15 +1386,11 @@ public class Project extends Application {
                 contentBox.getChildren().addAll(boldLabel, subLabel);
                 imageArea.getChildren().add(contentBox);
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
-                Label captionLabel = new Label("Pathos \u2022 " + caption);
-                captionLabel.setStyle(
-                                "-fx-text-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-padding: 5 15 20 15;");
-                captionLabel.setWrapText(true);
-
-                post.getChildren().addAll(header, imageArea, actions, captionLabel);
+                VBox comments = createCommentSection("pathos_" + username, caption);
+                post.getChildren().addAll(header, imageArea, actions, comments);
                 return post;
         }
 
@@ -1231,26 +1408,25 @@ public class Project extends Application {
         }
 
         private ImageMetadata getMetadataForImage(String filename) {
-                if (filename.equals("IMG_8083.jpeg"))
-                        return new ImageMetadata("sarah.explores", "Made a new friend today!", 90);
-                if (filename.equals("IMG_8101.jpeg"))
-                        return new ImageMetadata("jake.golfs",
-                                        "Perfect day for a round of golf. That view of the mountains is unbeatable. \u26f3\ufe0f\u26f0\ufe0f",
-                                        90);
-                if (filename.equals("IMG_8104.jpeg"))
-                        return new ImageMetadata("emily.designs",
-                                        "Stunning estate and gardens. The hydrangeas are in full bloom! \ud83c\udf38\ud83c\udfdb\ufe0f",
-                                        0);
-                if (filename.equals("IMG_8295.jpeg"))
-                        return new ImageMetadata("cafe.hopper.dan",
-                                        "A proper toasted sandwich and fresh juice to start the morning right. \ud83e\udd6a\ud83e\uddc3",
-                                        90);
-                if (filename.equals("IMG_8602.jpeg"))
-                        return new ImageMetadata("plant.mom.chloe",
-                                        "Lost inside this beautiful glass conservatory. Look at those giant banana leaves! \ud83c\udf3f\ud83c\udf31",
-                                        90);
+                String[] names = { "sarah", "jake", "emily", "dan", "chloe", "alex", "susan", "mike", "chris", "ash",
+                                "jess" };
+                String[] nouns = { "explores", "golfs", "designs", "eats", "travels", "daily", "life", "vibes",
+                                "photos", "moments" };
+                int hash = Math.abs(filename.hashCode());
+                String username = names[hash % names.length] + "_" + nouns[(hash / names.length) % nouns.length]
+                                + (hash % 99);
 
-                return new ImageMetadata("unknown_user", "Just another post in the void...", 0);
+                int rotation = 0;
+                if (filename.equals("IMG_8083.jpeg"))
+                        rotation = 90;
+                if (filename.equals("IMG_8101.jpeg"))
+                        rotation = 90;
+                if (filename.equals("IMG_8295.jpeg"))
+                        rotation = 90;
+                if (filename.equals("IMG_8602.jpeg"))
+                        rotation = 90;
+
+                return new ImageMetadata(username, "", rotation);
         }
 
         // --- IMAGE POST ---
@@ -1350,23 +1526,36 @@ public class Project extends Application {
                         imageArea.getChildren().add(error);
                 }
 
-                Object[] actionRes = createActionBar();
-                HBox actions = (HBox) actionRes[0];
+                Object[] actionRes = createActionBar(imageArea);
+                VBox actions = (VBox) actionRes[0];
                 addDoubleTapToLike(imageArea, (Button) actionRes[1]);
 
-                javafx.scene.text.Text userText = new javafx.scene.text.Text(username + " ");
-                userText.setStyle(
-                                "-fx-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-font-weight: bold;");
-
-                javafx.scene.text.Text captionTextObj = new javafx.scene.text.Text(caption);
-                captionTextObj.setStyle(
-                                "-fx-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px;");
-
-                javafx.scene.text.TextFlow captionFlow = new javafx.scene.text.TextFlow(userText, captionTextObj);
-                captionFlow.setPadding(new Insets(5, 15, 20, 15));
-
-                post.getChildren().addAll(header, imageArea, actions, captionFlow);
+                post.getChildren().addAll(header, imageArea, actions);
                 return post;
+        }
+
+        // --- COMMENT SECTION BUILDER ---
+        private VBox createCommentSection(String author, String text) {
+                VBox commentsBox = new VBox(5);
+                commentsBox.setPadding(new Insets(5, 15, 20, 15));
+
+                Label viewAll = new Label("View all 4 comments");
+                viewAll.setStyle("-fx-text-fill: #888888; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-cursor: hand;");
+
+                javafx.scene.text.Text userText = new javafx.scene.text.Text(author + " ");
+                userText.setStyle("-fx-fill: white; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px; -fx-font-weight: bold;");
+
+                javafx.scene.text.Text commentBody = new javafx.scene.text.Text(text);
+                commentBody.setStyle("-fx-fill: #dddddd; -fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 14px;");
+
+                javafx.scene.text.TextFlow commentFlow = new javafx.scene.text.TextFlow(userText, commentBody);
+                
+                viewAll.setOnMouseClicked(e -> {
+                        viewAll.setText("Comments locked by algorithm.");
+                });
+
+                commentsBox.getChildren().addAll(viewAll, commentFlow);
+                return commentsBox;
         }
 
         public static void main(String[] args) {
